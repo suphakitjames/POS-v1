@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $transaction->product_id = $_POST['product_id'];
         $transaction->user_id = $_SESSION['user_id'];
-        $transaction->supplier_id = null; // Stock out usually doesn't involve supplier directly in this context
+        $transaction->supplier_id = null;
         $transaction->type = 'out';
         $transaction->quantity = (int)$_POST['quantity'];
 
@@ -42,9 +42,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($transaction->create()) {
             echo json_encode(['success' => true, 'message' => 'บันทึกการเบิกสินค้าเรียบร้อยแล้ว']);
         } else {
-            // Check if it failed due to insufficient stock (create method returns false)
-            // Ideally Transaction model should throw specific exception or return error code.
-            // For now, assuming generic error or insufficient stock.
             throw new Exception("บันทึกไม่สำเร็จ (อาจเกิดจากสินค้าในสต็อกไม่พอ)");
         }
     } catch (Exception $e) {
@@ -132,7 +129,6 @@ require_once '../templates/layouts/header.php';
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         <?php
-                        // Simple query for recent 'out' transactions
                         $query = "SELECT t.*, p.name as product_name, u.username 
                                   FROM transactions t 
                                   JOIN products p ON t.product_id = p.id 
@@ -160,7 +156,6 @@ require_once '../templates/layouts/header.php';
 
 <script>
     $(document).ready(function() {
-        // Initialize DataTable
         $('#stockOutTable').DataTable({
             "order": [
                 [0, "desc"]
@@ -170,7 +165,6 @@ require_once '../templates/layouts/header.php';
             }
         });
 
-        // Update stock display when product is selected
         $('#product_id').on('change', function() {
             var stock = $(this).find(':selected').data('stock');
             if (stock !== undefined) {

@@ -8,11 +8,13 @@ require_once '../src/Middleware/AuthMiddleware.php';
 require_once '../src/Config/Database.php';
 require_once '../src/Models/Product.php';
 require_once '../src/Models/Transaction.php';
+require_once '../src/Helpers/NotificationHelper.php';
 
 use App\Middleware\AuthMiddleware;
 use App\Config\Database;
 use App\Models\Product;
 use App\Models\Transaction;
+use App\Helpers\NotificationHelper;
 
 // Check Authentication
 AuthMiddleware::check();
@@ -24,6 +26,12 @@ $db = $database->connect();
 // Instantiate Models
 $productModel = new Product($db);
 $transactionModel = new Transaction($db);
+
+// Auto-generate notifications (only for admin users)
+if ($_SESSION['role'] === 'admin') {
+    $notificationHelper = new NotificationHelper();
+    $notificationHelper->runAllChecks($_SESSION['user_id']);
+}
 
 // Query: Total Products
 $stmt = $db->query("SELECT COUNT(*) as total FROM products");

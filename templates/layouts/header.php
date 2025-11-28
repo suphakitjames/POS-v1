@@ -47,6 +47,41 @@
             background: #94a3b8;
         }
 
+        /* Notification Dropdown Styles */
+        #notificationDropdown {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .notification-item {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .notification-item:hover {
+            background-color: #f8fafc;
+        }
+
+        .notification-item.unread {
+            background-color: #eff6ff;
+        }
+
+        .notification-badge {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
         /* DataTables Customization */
         .dataTables_wrapper {
             padding: 1rem 0;
@@ -80,22 +115,16 @@
         .dataTables_wrapper .dataTables_filter,
         .dataTables_wrapper .dataTables_info,
         .dataTables_wrapper .dataTables_paginate {
-            color: #64748b;
+            color: #475569;
             font-size: 0.875rem;
         }
 
         table.dataTable thead th {
-            border-bottom: 1px solid #e2e8f0;
-            padding: 1rem 1.5rem;
-            font-weight: 600;
-            color: #334155;
+            position: relative;
             background-color: #f8fafc;
-        }
-
-        table.dataTable tbody td {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid #f1f5f9;
-            color: #475569;
+            color: #1e293b;
+            font-weight: 600;
+            padding: 1rem;
         }
 
         table.dataTable tbody tr:hover {
@@ -125,24 +154,19 @@
 
         /* Mobile Responsiveness Fixes */
         @media (max-width: 640px) {
-
-            /* Hide Sidebar by default on mobile */
             aside {
                 transform: translateX(-100%);
                 z-index: 50 !important;
             }
 
-            /* Show Sidebar when active */
             aside.active {
                 transform: translateX(0);
             }
 
-            /* Reset Navbar margin */
             nav {
                 margin-left: 0 !important;
             }
 
-            /* Add overlay when sidebar is open */
             #sidebarOverlay {
                 display: none;
                 position: fixed;
@@ -155,19 +179,14 @@
                 display: block;
             }
 
-            /* Button Transition */
             #mobileMenuBtn {
                 transition: transform 0.3s ease-in-out;
             }
 
-            /* Move button when sidebar is open */
             #mobileMenuBtn.active {
                 transform: translateX(18rem);
-                /* w-72 = 18rem */
                 background-color: #f1f5f9;
-                /* Match sidebar bg */
                 color: #ef4444;
-                /* Red color */
             }
         }
     </style>
@@ -298,12 +317,34 @@
             <!-- Right Side Actions -->
             <div class="flex items-center gap-4">
                 <!-- Notifications -->
-                <button class="relative p-2 text-slate-400 hover:text-slate-600 transition-colors rounded-lg hover:bg-slate-50">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                    </svg>
-                    <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-                </button>
+                <div class="relative">
+                    <button id="notificationBell" onclick="toggleNotifications()" class="relative p-2 text-slate-400 hover:text-slate-600 transition-colors rounded-lg hover:bg-slate-50">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                        </svg>
+                        <span id="notificationBadge" class="notification-badge absolute top-1.5 right-1.5 hidden min-w-[1.25rem] h-5 px-1 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white">0</span>
+                    </button>
+
+                    <!-- Notification Dropdown -->
+                    <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-96 
+
+bg-white rounded-xl shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                        <div class="p-4 border-b border-slate-200">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-bold text-slate-800">การแจ้งเตือน</h3>
+                                <button onclick="markAllAsRead()" class="text-xs text-blue-600 hover:text-blue-700 font-medium">ทำเครื่องหมายทั้งหมด</button>
+                            </div>
+                        </div>
+                        <div id="notificationList" class="divide-y divide-slate-100">
+                            <div class="p-8 text-center text-slate-500">
+                                <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                </svg>
+                                <p class="mt-2 text-sm">กำลังโหลด...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Profile Dropdown -->
                 <div class="relative ml-3">
@@ -337,6 +378,7 @@
     </nav>
 
     <script>
+        // Mobile menu toggle
         document.addEventListener('DOMContentLoaded', () => {
             const menuBtn = document.getElementById('mobileMenuBtn');
             const sidebar = document.querySelector('aside');
@@ -348,7 +390,6 @@
                     overlay.classList.toggle('active');
                     menuBtn.classList.toggle('active');
 
-                    // Toggle icon
                     if (menuBtn.classList.contains('active')) {
                         menuBtn.innerHTML = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -368,6 +409,137 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>`;
                 });
+            }
+
+            // Load notifications on page load
+            loadNotifications();
+
+            // Refresh notifications every 30 seconds
+            setInterval(loadNotifications, 30000);
+        });
+
+        // Notification Functions
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('hidden');
+
+            if (!dropdown.classList.contains('hidden')) {
+                loadNotifications();
+            }
+        }
+
+        function loadNotifications() {
+            $.ajax({
+                url: 'api/notifications.php',
+                method: 'GET',
+                data: {
+                    action: 'get_unread',
+                    limit: 10
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        updateNotificationBadge(response.data.length);
+                        displayNotifications(response.data);
+                    }
+                },
+                error: function() {
+                    console.error('Failed to load notifications');
+                }
+            });
+        }
+
+        function updateNotificationBadge(count) {
+            const badge = document.getElementById('notificationBadge');
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function displayNotifications(notifications) {
+            const list = document.getElementById('notificationList');
+
+            if (notifications.length === 0) {
+                list.innerHTML = `
+                    <div class="p-8 text-center text-slate-500">
+                        <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p class="mt-2 text-sm">ไม่มีการแจ้งเตือนใหม่</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = notifications.map(notif => `
+                <div class="notification-item ${!notif.is_read ? 'unread' : ''} p-4" onclick="markAsRead(${notif.id})">
+                    <div class="flex gap-3">
+                        <div class="flex-shrink-0">
+                            ${getNotificationIcon(notif.type)}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-slate-800">${notif.title}</p>
+                            <p class="text-sm text-slate-600 mt-1">${notif.message}</p>
+                            <p class="text-xs text-slate-400 mt-1">${notif.time_ago}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getNotificationIcon(type) {
+            const icons = {
+                'low_stock': '<span class="text-2xl">⚠️</span>',
+                'expiring_soon': '<span class="text-2xl">🕒</span>',
+                'out_of_stock': '<span class="text-2xl">📦</span>',
+                'security_alert': '<span class="text-2xl">👮</span>'
+            };
+            return icons[type] || '<span class="text-2xl">🔔</span>';
+        }
+
+        function markAsRead(id) {
+            $.ajax({
+                url: 'api/notifications.php',
+                method: 'POST',
+                data: {
+                    action: 'mark_as_read',
+                    id: id
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        loadNotifications();
+                    }
+                }
+            });
+        }
+
+        function markAllAsRead() {
+            $.ajax({
+                url: 'api/notifications.php',
+                method: 'POST',
+                data: {
+                    action: 'mark_all_read'
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        loadNotifications();
+                    }
+                }
+            });
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            const notifDropdown = document.getElementById('notificationDropdown');
+            const notifBell = document.getElementById('notificationBell');
+
+            if (!notifBell.contains(event.target) && !notifDropdown.contains(event.target)) {
+                notifDropdown.classList.add('hidden');
             }
         });
     </script>

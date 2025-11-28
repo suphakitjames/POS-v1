@@ -119,6 +119,70 @@
     </div>
 </div>
 
+<!-- Signature Section for Printing -->
+<div class="hidden print:flex justify-between mt-10 px-10">
+    <div class="text-center">
+        <p>__________________________</p>
+        <p class="mt-2">ผู้ทำรายการ</p>
+        <p class="text-xs text-slate-500">( <?= $_SESSION['username'] ?> )</p>
+    </div>
+    <div class="text-center">
+        <p>__________________________</p>
+        <p class="mt-2">ผู้อนุมัติ / หัวหน้าคลัง</p>
+    </div>
+</div>
+
+<style>
+    @media print {
+
+        /* Show signature section */
+        .print\:flex {
+            display: flex !important;
+        }
+
+        /* Hide unnecessary elements */
+        nav,
+        aside,
+        button,
+        form,
+        .dt-buttons,
+        .dataTables_filter,
+        .dataTables_length,
+        .dataTables_info,
+        .dataTables_paginate {
+            display: none !important;
+        }
+
+        /* Adjust table styling for print */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        table th,
+        table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        /* Adjust page margins */
+        body {
+            margin: 20px;
+        }
+
+        /* Ensure table fits on page */
+        .overflow-hidden {
+            overflow: visible !important;
+        }
+    }
+</style>
+
 <script>
     $(document).ready(function() {
         $('#movementTable').DataTable({
@@ -163,7 +227,7 @@
             responsive: true,
             order: [
                 [0, 'desc']
-            ] // Sort by date descending
+            ]
         });
     });
 </script>
