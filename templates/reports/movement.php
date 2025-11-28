@@ -110,7 +110,27 @@
                             <td><?= number_format($t['quantity']) ?></td>
                             <td><?= number_format($t['remaining_stock']) ?></td>
                             <td><?= htmlspecialchars($t['username']) ?></td>
-                            <td><?= htmlspecialchars($t['note']) ?></td>
+                            <td>
+                                <?php
+                                // แปลหมายเหตุเป็นภาษาไทย
+                                $note = $t['note'];
+                                $translations = [
+                                    '[Sale]' => '[ขาย]',
+                                    '[Usage]' => '[ใช้งาน]',
+                                    '[Damaged]' => '[เสียหาย]',
+                                    '[Lost]' => '[สูญหาย]',
+                                    '[Expired]' => '[หมดอายุ]',
+                                    '[Adjust]' => '[ปรับปรุง]',
+                                    '[Return]' => '[คืน]',
+                                ];
+
+                                foreach ($translations as $eng => $thai) {
+                                    $note = str_replace($eng, $thai, $note);
+                                }
+
+                                echo htmlspecialchars($note);
+                                ?>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -119,72 +139,11 @@
     </div>
 </div>
 
-<!-- Signature Section for Printing -->
-<div class="hidden print:flex justify-between mt-10 px-10">
-    <div class="text-center">
-        <p>__________________________</p>
-        <p class="mt-2">ผู้ทำรายการ</p>
-        <p class="text-xs text-slate-500">( <?= $_SESSION['username'] ?> )</p>
-    </div>
-    <div class="text-center">
-        <p>__________________________</p>
-        <p class="mt-2">ผู้อนุมัติ / หัวหน้าคลัง</p>
-    </div>
-</div>
-
-<style>
-    @media print {
-
-        /* Show signature section */
-        .print\:flex {
-            display: flex !important;
-        }
-
-        /* Hide unnecessary elements */
-        nav,
-        aside,
-        button,
-        form,
-        .dt-buttons,
-        .dataTables_filter,
-        .dataTables_length,
-        .dataTables_info,
-        .dataTables_paginate {
-            display: none !important;
-        }
-
-        /* Adjust table styling for print */
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-
-        table th,
-        table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-
-        table th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-        }
-
-        /* Adjust page margins */
-        body {
-            margin: 20px;
-        }
-
-        /* Ensure table fits on page */
-        .overflow-hidden {
-            overflow: visible !important;
-        }
-    }
-</style>
-
 <script>
     $(document).ready(function() {
+        // Get current username for signature
+        var currentUser = '<?= $_SESSION['username'] ?>';
+
         $('#movementTable').DataTable({
             dom: 'Bfrtip',
             buttons: [{
@@ -203,6 +162,35 @@
                     title: 'รายงานความเคลื่อนไหวสต็อก',
                     exportOptions: {
                         columns: ':visible'
+                    },
+                    customize: function(win) {
+                        // Add signature section after table
+                        $(win.document.body).append(
+                            '<div style="margin-top: 50px; padding: 0 20px;">' +
+                            '<div style="display: flex; justify-content: space-between;">' +
+                            '<div style="text-align: center; flex: 1;">' +
+                            '<p style="margin: 0; border-top: 1px solid #000; display: inline-block; padding-top: 5px; min-width: 200px;">ผู้ทำรายการ</p>' +
+                            '<p style="margin-top: 5px; font-size: 12px; color: #666;">( ' + currentUser + ' )</p>' +
+                            '</div>' +
+                            '<div style="text-align: center; flex: 1;">' +
+                            '<p style="margin: 0; border-top: 1px solid #000; display: inline-block; padding-top: 5px; min-width: 200px;">ผู้อนุมัติ / หัวหน้าคลัง</p>' +
+                            '</div>' +
+                            '</div>' +
+                            '</div>'
+                        );
+
+                        // Style adjustments for print
+                        $(win.document.body).find('table')
+                            .addClass('compact')
+                            .css('font-size', '12px');
+
+                        $(win.document.body).find('th, td')
+                            .css('border', '1px solid #ddd')
+                            .css('padding', '8px');
+
+                        $(win.document.body).find('th')
+                            .css('background-color', '#f2f2f2')
+                            .css('font-weight', 'bold');
                     }
                 }
             ],

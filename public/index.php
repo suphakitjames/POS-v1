@@ -27,11 +27,9 @@ $db = $database->connect();
 $productModel = new Product($db);
 $transactionModel = new Transaction($db);
 
-// Auto-generate notifications (only for admin users)
-if ($_SESSION['role'] === 'admin') {
-    $notificationHelper = new NotificationHelper();
-    $notificationHelper->runAllChecks($_SESSION['user_id']);
-}
+// Auto-generate notifications for all users
+$notificationHelper = new NotificationHelper();
+$notificationHelper->runAllChecks();
 
 // Query: Total Products
 $stmt = $db->query("SELECT COUNT(*) as total FROM products");
