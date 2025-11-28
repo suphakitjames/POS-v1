@@ -18,9 +18,6 @@ $product = new Product($db);
 
 // Handle AJAX requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // If it's a file upload, we can't just check $_POST['action'] directly if it's not set in the same way
-    // But FormData appends it, so it should be fine.
-
     $action = $_POST['action'] ?? '';
 
     if ($action === 'create' || $action === 'update') {
@@ -63,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $product->expire_date = !empty($_POST['expire_date']) ? $_POST['expire_date'] : null;
 
         if ($action === 'create') {
-            $product->image_path = $image_path; // Can be null
+            $product->image_path = $image_path;
             if ($product->create()) {
                 echo json_encode(['success' => true, 'message' => 'เพิ่มสินค้าสำเร็จ']);
             } else {
@@ -72,17 +69,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($action === 'update') {
             $product->id = $_POST['id'];
 
-            // If new image uploaded, use it. Otherwise, keep old one.
-            // We need to fetch the old image path if no new one is uploaded?
-            // Or we can pass the old image path via hidden field?
-            // Better: If $image_path is null, we don't update the image_path column?
-            // But our model updates all columns.
-            // So we should fetch the existing product first or pass the old path.
-
             if ($image_path) {
                 $product->image_path = $image_path;
             } else {
-                // Use existing image path from hidden field if available
                 $product->image_path = $_POST['existing_image_path'] ?? null;
             }
 
@@ -334,374 +323,179 @@ require_once '../templates/layouts/header.php';
                     บันทึก
                 </button>
             </div>
+        </form>
+    </div>
+</div>
 
-            <!-- Filters Card -->
-            <div class="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <div class="flex items-center gap-4">
-                    <label class="text-sm font-medium text-gray-700">กรองตามหมวดหมู่:</label>
-                    <select id="categoryFilter" class="rounded-lg border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500">
-                        <option value="">ทั้งหมด</option>
-                        <?php foreach ($categories as $cat): ?>
-                            <option value="<?= h($cat['name']) ?>"><?= h($cat['name']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-            </div>
+<script>
+    let table;
 
-            <!-- Products Table Card -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table id="productsTable" class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">สินค้า</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">หมวดหมู่</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">SKU / Barcode</th>
-                                <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">ราคาขาย</th>
-                                <th scope="col" class="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">คงเหลือ</th>
-                                <th scope="col" class="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">จัดการ</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            <?php foreach ($products as $p): ?>
-                                <tr class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <div class="h-12 w-12 flex-shrink-0">
-                                                <?php if ($p['image_path']): ?>
-                                                    <img class="h-12 w-12 rounded-lg object-cover" src="<?= h($p['image_path']) ?>" alt="">
-                                                <?php else: ?>
-                                                    <div class="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center">
-                                                        <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                                        </svg>
-                                                    </div>
-                                                <?php endif; ?>
-                                            </div>
-                                            <div class="ml-4">
-                                                <div class="text-sm font-medium text-gray-900"><?= h($p['name']) ?></div>
-                                                <div class="text-xs text-gray-500"><?= mb_strimwidth(h($p['description']), 0, 40, '...') ?></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                            <?= h($p['category_name']) ?>
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        <div class="font-medium"><?= h($p['sku']) ?></div>
-                                        <div class="text-gray-500 text-xs"><?= h($p['barcode']) ?></div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-semibold text-gray-900">
-                                        <?= number_format($p['selling_price'], 2) ?> ฿
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center">
-                                        <?php
-                                        $stock_class = 'bg-green-100 text-green-800';
-                                        if ($p['stock_quantity'] <= 0) {
-                                            $stock_class = 'bg-red-100 text-red-800';
-                                        } elseif ($p['stock_quantity'] <= $p['reorder_point']) {
-                                            $stock_class = 'bg-yellow-100 text-yellow-800';
-                                        }
-                                        ?>
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold <?= $stock_class ?>">
-                                            <?= number_format($p['stock_quantity']) ?>
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
-                                        <?php if ($_SESSION['role'] === 'admin'): ?>
-                                            <button onclick="openEditModal(<?= $p['id'] ?>)" class="text-blue-600 hover:text-blue-800 font-medium mr-3">
-                                                <svg class="h-5 w-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                                </svg>
-                                            </button>
-                                            <button onclick="deleteProduct(<?= $p['id'] ?>)" class="text-red-600 hover:text-red-800 font-medium">
-                                                <svg class="h-5 w-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                                </svg>
-                                            </button>
-                                        <?php else: ?>
-                                            <span class="text-gray-400 text-xs">ดูอย่างเดียว</span>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+    $(document).ready(function() {
+        table = $('#productsTable').DataTable({
+            "language": {
+                "sProcessing": "กำลังดำเนินการ...",
+                "sLengthMenu": "แสดง _MENU_ รายการ",
+                "sZeroRecords": "ไม่พบข้อมูล",
+                "sInfo": "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
+                "sInfoEmpty": "แสดง 0 ถึง 0 จาก 0 รายการ",
+                "sInfoFiltered": "(กรองข้อมูล _MAX_ ทุกรายการ)",
+                "sInfoPostFix": "",
+                "sSearch": "ค้นหา:",
+                "sUrl": "",
+                "oPaginate": {
+                    "sFirst": "หน้าแรก",
+                    "sPrevious": "ก่อนหน้า",
+                    "sNext": "ถัดไป",
+                    "sLast": "หน้าสุดท้าย"
+                }
+            },
+            "pageLength": 10,
+            "lengthMenu": [
+                [10, 25, 50, -1],
+                [10, 25, 50, "ทั้งหมด"]
+            ],
+            "order": [
+                [0, "asc"]
+            ]
+        });
 
-            <!-- Add/Edit Modal -->
-            <div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
-                <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                    <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 rounded-t-xl z-10">
-                        <h3 id="modalTitle" class="text-xl font-bold text-white">เพิ่มสินค้าใหม่</h3>
-                    </div>
-                    <form id="productForm" class="p-6" enctype="multipart/form-data">
-                        <input type="hidden" id="productId" name="id">
-                        <input type="hidden" id="formAction" name="action">
-                        <input type="hidden" id="existingImagePath" name="existing_image_path">
+        // Check for search parameter in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchTerm = urlParams.get('search');
+        if (searchTerm) {
+            table.search(searchTerm).draw();
+        }
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        $('#categoryFilter').on('change', function() {
+            table.column(1).search(this.value).draw();
+        });
 
-                            <!-- Image Upload Section -->
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">รูปภาพสินค้า</label>
-                                <div class="flex items-center gap-4">
-                                    <div id="imagePreviewContainer" class="w-24 h-24 rounded-lg bg-gray-100 border border-gray-300 flex items-center justify-center overflow-hidden relative hidden">
-                                        <img id="imagePreview" src="" alt="Preview" class="w-full h-full object-cover">
-                                    </div>
-                                    <div class="flex-1">
-                                        <input type="file" name="image" id="imageInput" accept="image/*" class="block w-full text-sm text-gray-500
-                                file:mr-4 file:py-2 file:px-4
-                                file:rounded-full file:border-0
-                                file:text-sm file:font-semibold
-                                file:bg-blue-50 file:text-blue-700
-                                hover:file:bg-blue-100
-                            " />
-                                        <p class="mt-1 text-xs text-gray-500">รองรับไฟล์ JPG, PNG, GIF (ขนาดแนะนำ 500x500px)</p>
-                                    </div>
-                                </div>
-                            </div>
+        // Image Preview Handler
+        $('#imageInput').on('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#imagePreview').attr('src', e.target.result);
+                    $('#imagePreviewContainer').removeClass('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    });
 
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">SKU <span class="text-red-500">*</span></label>
-                                <input type="text" name="sku" id="sku" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
-                            </div>
+    function openAddModal() {
+        document.getElementById('modalTitle').textContent = 'เพิ่มสินค้าใหม่';
+        document.getElementById('formAction').value = 'create';
+        document.getElementById('productForm').reset();
+        document.getElementById('productId').value = '';
+        document.getElementById('existingImagePath').value = '';
 
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Barcode</label>
-                                <input type="text" name="barcode" id="barcode" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
-                            </div>
+        // Reset Image Preview
+        $('#imagePreview').attr('src', '');
+        $('#imagePreviewContainer').addClass('hidden');
 
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">ชื่อสินค้า <span class="text-red-500">*</span></label>
-                                <input type="text" name="name" id="name" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
-                            </div>
+        document.getElementById('productModal').classList.remove('hidden');
+        document.getElementById('productModal').classList.add('flex');
+    }
 
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">รายละเอียด</label>
-                                <textarea name="description" id="description" rows="3" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"></textarea>
-                            </div>
+    function openEditModal(id) {
+        document.getElementById('modalTitle').textContent = 'แก้ไขสินค้า';
+        document.getElementById('formAction').value = 'update';
 
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">หมวดหมู่ <span class="text-red-500">*</span></label>
-                                <select name="category_id" id="category_id" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
-                                    <option value="">เลือกหมวดหมู่</option>
-                                    <?php foreach ($categories as $cat): ?>
-                                        <option value="<?= $cat['id'] ?>"><?= h($cat['name']) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
+        $.ajax({
+            url: 'products.php',
+            method: 'POST',
+            data: {
+                action: 'get',
+                id: id
+            },
+            success: function(data) {
+                document.getElementById('productId').value = data.id;
+                document.getElementById('sku').value = data.sku;
+                document.getElementById('barcode').value = data.barcode || '';
+                document.getElementById('name').value = data.name;
+                document.getElementById('description').value = data.description || '';
+                document.getElementById('category_id').value = data.category_id;
+                document.getElementById('cost_price').value = data.cost_price;
+                document.getElementById('selling_price').value = data.selling_price;
+                document.getElementById('stock_quantity').value = data.stock_quantity;
+                document.getElementById('reorder_point').value = data.reorder_point;
+                document.getElementById('expire_date').value = data.expire_date || '';
+                document.getElementById('existingImagePath').value = data.image_path || '';
 
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">วันหมดอายุ</label>
-                                <input type="date" name="expire_date" id="expire_date" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">ราคาทุน <span class="text-red-500">*</span></label>
-                                <input type="number" step="0.01" name="cost_price" id="cost_price" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">ราคาขาย <span class="text-red-500">*</span></label>
-                                <input type="number" step="0.01" name="selling_price" id="selling_price" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">จำนวนคงเหลือ <span class="text-red-500">*</span></label>
-                                <input type="number" name="stock_quantity" id="stock_quantity" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">จุดสั่งซื้อ <span class="text-red-500">*</span></label>
-                                <input type="number" name="reorder_point" id="reorder_point" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
-                            </div>
-                        </div>
-
-                        <div class="mt-6 flex gap-3 justify-end border-t pt-6">
-                            <button type="button" onclick="closeModal()" class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors">
-                                ยกเลิก
-                            </button>
-                            <button type="submit" class="px-5 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-sm">
-                                บันทึก
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <script>
-                let table;
-
-                $(document).ready(function() {
-                    table = $('#productsTable').DataTable({
-                        "language": {
-                            "sProcessing": "กำลังดำเนินการ...",
-                            "sLengthMenu": "แสดง _MENU_ รายการ",
-                            "sZeroRecords": "ไม่พบข้อมูล",
-                            "sInfo": "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
-                            "sInfoEmpty": "แสดง 0 ถึง 0 จาก 0 รายการ",
-                            "sInfoFiltered": "(กรองข้อมูล _MAX_ ทุกรายการ)",
-                            "sInfoPostFix": "",
-                            "sSearch": "ค้นหา:",
-                            "sUrl": "",
-                            "oPaginate": {
-                                "sFirst": "หน้าแรก",
-                                "sPrevious": "ก่อนหน้า",
-                                "sNext": "ถัดไป",
-                                "sLast": "หน้าสุดท้าย"
-                            }
-                        },
-                        "pageLength": 10,
-                        "lengthMenu": [
-                            [10, 25, 50, -1],
-                            [10, 25, 50, "ทั้งหมด"]
-                        ],
-                        "order": [
-                            [0, "asc"]
-                        ]
-                    });
-
-                    // Check for search parameter in URL
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const searchTerm = urlParams.get('search');
-                    if (searchTerm) {
-                        table.search(searchTerm).draw();
-                    }
-
-                    $('#categoryFilter').on('change', function() {
-                        table.column(1).search(this.value).draw();
-                    });
-
-                    // Image Preview Handler
-                    $('#imageInput').on('change', function(e) {
-                        const file = e.target.files[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = function(e) {
-                                $('#imagePreview').attr('src', e.target.result);
-                                $('#imagePreviewContainer').removeClass('hidden');
-                            }
-                            reader.readAsDataURL(file);
-                        }
-                    });
-                });
-
-                function openAddModal() {
-                    document.getElementById('modalTitle').textContent = 'เพิ่มสินค้าใหม่';
-                    document.getElementById('formAction').value = 'create';
-                    document.getElementById('productForm').reset();
-                    document.getElementById('productId').value = '';
-                    document.getElementById('existingImagePath').value = '';
-
-                    // Reset Image Preview
+                // Show existing image
+                if (data.image_path) {
+                    $('#imagePreview').attr('src', data.image_path);
+                    $('#imagePreviewContainer').removeClass('hidden');
+                } else {
                     $('#imagePreview').attr('src', '');
                     $('#imagePreviewContainer').addClass('hidden');
-
-                    document.getElementById('productModal').classList.remove('hidden');
-                    document.getElementById('productModal').classList.add('flex');
                 }
 
-                function openEditModal(id) {
-                    document.getElementById('modalTitle').textContent = 'แก้ไขสินค้า';
-                    document.getElementById('formAction').value = 'update';
+                document.getElementById('productModal').classList.remove('hidden');
+                document.getElementById('productModal').classList.add('flex');
+            },
+            error: function(xhr, status, error) {
+                alert('เกิดข้อผิดพลาด: ' + error);
+            }
+        });
+    }
 
-                    $.ajax({
-                        url: 'products.php',
-                        method: 'POST',
-                        data: {
-                            action: 'get',
-                            id: id
-                        },
-                        success: function(data) {
-                            document.getElementById('productId').value = data.id;
-                            document.getElementById('sku').value = data.sku;
-                            document.getElementById('barcode').value = data.barcode || '';
-                            document.getElementById('name').value = data.name;
-                            document.getElementById('description').value = data.description || '';
-                            document.getElementById('category_id').value = data.category_id;
-                            document.getElementById('cost_price').value = data.cost_price;
-                            document.getElementById('selling_price').value = data.selling_price;
-                            document.getElementById('stock_quantity').value = data.stock_quantity;
-                            document.getElementById('reorder_point').value = data.reorder_point;
-                            document.getElementById('expire_date').value = data.expire_date || '';
-                            document.getElementById('existingImagePath').value = data.image_path || '';
+    function closeModal() {
+        document.getElementById('productModal').classList.add('hidden');
+        document.getElementById('productModal').classList.remove('flex');
+    }
 
-                            // Show existing image
-                            if (data.image_path) {
-                                $('#imagePreview').attr('src', data.image_path);
-                                $('#imagePreviewContainer').removeClass('hidden');
-                            } else {
-                                $('#imagePreview').attr('src', '');
-                                $('#imagePreviewContainer').addClass('hidden');
-                            }
+    function deleteProduct(id) {
+        if (confirm('คุณต้องการลบสินค้านี้หรือไม่?')) {
 
-                            document.getElementById('productModal').classList.remove('hidden');
-                            document.getElementById('productModal').classList.add('flex');
-                        },
-                        error: function(xhr, status, error) {
-                            alert('เกิดข้อผิดพลาด: ' + error);
-                        }
-                    });
-                }
+            $.ajax({
+                url: 'products.php',
+                method: 'POST',
+                data: {
+                    action: 'delete',
+                    id: id
+                },
+                dataType: 'json',
+                success: function(response) {
 
-                function closeModal() {
-                    document.getElementById('productModal').classList.add('hidden');
-                    document.getElementById('productModal').classList.remove('flex');
-                }
-
-                function deleteProduct(id) {
-                    if (confirm('คุณต้องการลบสินค้านี้หรือไม่?')) {
-
-                        $.ajax({
-                            url: 'products.php',
-                            method: 'POST',
-                            data: {
-                                action: 'delete',
-                                id: id
-                            },
-                            dataType: 'json',
-                            success: function(response) {
-
-                                alert(response.message);
-                                if (response.success) {
-                                    location.reload();
-                                }
-                            },
-                            error: function(xhr, status, error) {
-                                alert('เกิดข้อผิดพลาด: ' + error + '\nResponse: ' + xhr.responseText);
-                            }
-                        });
+                    alert(response.message);
+                    if (response.success) {
+                        location.reload();
                     }
+                },
+                error: function(xhr, status, error) {
+                    alert('เกิดข้อผิดพลาด: ' + error + '\nResponse: ' + xhr.responseText);
                 }
+            });
+        }
+    }
 
-                $('#productForm').on('submit', function(e) {
-                    e.preventDefault();
+    $('#productForm').on('submit', function(e) {
+        e.preventDefault();
 
-                    // Use FormData for file upload
-                    var formData = new FormData(this);
+        // Use FormData for file upload
+        var formData = new FormData(this);
 
-                    $.ajax({
-                        url: 'products.php',
-                        method: 'POST',
-                        data: formData,
-                        dataType: 'json',
-                        processData: false, // Important for FormData
-                        contentType: false, // Important for FormData
-                        success: function(response) {
-                            alert(response.message);
-                            if (response.success) {
-                                location.reload();
-                            }
-                        },
-                        error: function(xhr, status, error) {
-                            alert('เกิดข้อผิดพลาดในการบันทึก: ' + error);
-                        }
-                    });
-                });
-            </script>
+        $.ajax({
+            url: 'products.php',
+            method: 'POST',
+            data: formData,
+            dataType: 'json',
+            processData: false, // Important for FormData
+            contentType: false, // Important for FormData
+            success: function(response) {
+                alert(response.message);
+                if (response.success) {
+                    location.reload();
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('เกิดข้อผิดพลาดในการบันทึก: ' + error);
+            }
+        });
+    });
+</script>
 
-            <?php require_once '../templates/layouts/footer.php'; ?>
+<?php require_once '../templates/layouts/footer.php'; ?>
