@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
 
     <!-- jQuery & DataTables JS -->
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 
     <!-- Chart.js -->
@@ -175,7 +175,7 @@
                 z-index: 45;
             }
 
-            #sidebarOverlay.active {
+            #sidebar Overlay.active {
                 display: block;
             }
 
@@ -327,7 +327,6 @@
 
                     <!-- Notification Dropdown -->
                     <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-96 
-
 bg-white rounded-xl shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
                         <div class="p-4 border-b border-slate-200">
                             <div class="flex items-center justify-between">

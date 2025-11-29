@@ -47,10 +47,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } elseif ($action === 'delete') {
             $supplier->id = $_POST['id'];
-            if ($supplier->delete()) {
-                echo json_encode(['success' => true, 'message' => 'ลบข้อมูลสำเร็จ']);
+            $result = $supplier->delete();
+
+            if (is_array($result)) {
+                if ($result['success']) {
+                    echo json_encode(['success' => true, 'message' => 'ลบข้อมูลสำเร็จ']);
+                } else {
+                    // Has associated products
+                    $productCount = $result['product_count'];
+                    if ($productCount > 0) {
+                        throw new Exception("⚠️ ไม่สามารถลบได้! มีสินค้า {$productCount} รายการ ผูกกับผู้จัดจำหน่ายรายนี้อยู่");
+                    } else {
+                        throw new Exception("เกิดข้อผิดพลาดในการลบข้อมูล");
+                    }
+                }
             } else {
-                throw new Exception("เกิดข้อผิดพลาดในการลบข้อมูล (อาจมีการใช้งานอยู่)");
+                throw new Exception("เกิดข้อผิดพลาดในการลบข้อมูล");
             }
         } elseif ($action === 'get_single') {
             $supplier->id = $_POST['id'];
@@ -181,7 +193,7 @@ require_once '../templates/layouts/header.php';
     $(document).ready(function() {
         $('#suppliersTable').DataTable({
             "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/th.json"
+                "url": "https://cdn.datatables.net/plug-ins/1.13.7/i18n/th.json"
             },
             "dom": '<"flex flex-col sm:flex-row justify-between items-center mb-4 gap-4"lf>rt<"flex flex-col sm:flex-row justify-between items-center mt-4 gap-4"ip>',
             "drawCallback": function() {
@@ -199,7 +211,6 @@ require_once '../templates/layouts/header.php';
                 dataType: 'json',
                 success: function(response) {
                     if (response.success) {
-                        // alert(response.message);
                         location.reload();
                     } else {
                         alert('Error: ' + response.message);

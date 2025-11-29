@@ -102,11 +102,28 @@ class Supplier
         return false;
     }
 
+    // Count Products associated with this Supplier
+    public function countProducts()
+    {
+        $query = 'SELECT COUNT(*) as total FROM products WHERE supplier_id = :supplier_id';
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':supplier_id', $this->id);
+        $stmt->execute();
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row['total'];
+    }
+
     // Delete Supplier
     public function delete()
     {
-        // Check if supplier is used in transactions or products (optional but recommended)
-        // For now, simple delete. DB constraints might prevent deletion if FK exists.
+        // Check if supplier has associated products
+        $productCount = $this->countProducts();
+
+        if ($productCount > 0) {
+            // Return false with product count info
+            return ['success' => false, 'product_count' => $productCount];
+        }
 
         $query = 'DELETE FROM ' . $this->table . ' WHERE id = :id';
         $stmt = $this->conn->prepare($query);
@@ -115,8 +132,8 @@ class Supplier
         $stmt->bindParam(':id', $this->id);
 
         if ($stmt->execute()) {
-            return true;
+            return ['success' => true];
         }
-        return false;
+        return ['success' => false, 'product_count' => 0];
     }
 }
