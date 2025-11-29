@@ -207,6 +207,11 @@ require_once '../templates/layouts/header.php';
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                             <div class="flex items-center justify-center gap-2">
+                                <button onclick="openPrintModal(<?= $p['id'] ?>)" class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" title="พิมพ์บาร์โค้ด">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                                    </svg>
+                                </button>
                                 <button onclick="openEditModal(<?= $p['id'] ?>)" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="แก้ไข">
                                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
@@ -324,6 +329,35 @@ require_once '../templates/layouts/header.php';
                 </button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Print Barcode Modal -->
+<div id="printModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full">
+        <div class="bg-gray-800 px-6 py-4 rounded-t-xl">
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                </svg>
+                พิมพ์บาร์โค้ด
+            </h3>
+        </div>
+        <div class="p-6">
+            <input type="hidden" id="printProductId">
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">จำนวนดวงที่ต้องการพิมพ์</label>
+                <input type="number" id="printQty" value="1" min="1" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors text-center text-lg font-bold">
+            </div>
+            <div class="flex gap-3 justify-end">
+                <button type="button" onclick="closePrintModal()" class="flex-1 px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors">
+                    ยกเลิก
+                </button>
+                <button type="button" onclick="confirmPrint()" class="flex-1 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-sm">
+                    ยืนยัน
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -445,6 +479,34 @@ require_once '../templates/layouts/header.php';
     function closeModal() {
         document.getElementById('productModal').classList.add('hidden');
         document.getElementById('productModal').classList.remove('flex');
+    }
+
+    function openPrintModal(id) {
+        document.getElementById('printProductId').value = id;
+        document.getElementById('printQty').value = 1;
+        document.getElementById('printModal').classList.remove('hidden');
+        document.getElementById('printModal').classList.add('flex');
+        // Focus on quantity input
+        setTimeout(() => document.getElementById('printQty').focus(), 100);
+    }
+
+    function closePrintModal() {
+        document.getElementById('printModal').classList.add('hidden');
+        document.getElementById('printModal').classList.remove('flex');
+    }
+
+    function confirmPrint() {
+        const id = document.getElementById('printProductId').value;
+        const qty = document.getElementById('printQty').value;
+
+        if (qty < 1) {
+            alert('กรุณาระบุจำนวนอย่างน้อย 1 ดวง');
+            return;
+        }
+
+        // Open print page in new tab
+        window.open(`barcode_print.php?product_id=${id}&qty=${qty}`, '_blank');
+        closePrintModal();
     }
 
     function deleteProduct(id) {
