@@ -2,10 +2,12 @@
 require_once '../src/Helpers/functions.php';
 require_once '../src/Config/Database.php';
 require_once '../src/Models/Product.php';
+require_once '../src/Models/Supplier.php';
 require_once '../src/Middleware/AuthMiddleware.php';
 
 use App\Config\Database;
 use App\Models\Product;
+use App\Models\Supplier;
 use App\Middleware\AuthMiddleware;
 
 // Check Authentication
@@ -15,6 +17,7 @@ AuthMiddleware::check();
 $database = new Database();
 $db = $database->connect();
 $product = new Product($db);
+$supplier = new Supplier($db);
 
 // Handle AJAX requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -53,6 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $product->name = $_POST['name'];
         $product->description = $_POST['description'] ?? '';
         $product->category_id = $_POST['category_id'];
+        $product->supplier_id = !empty($_POST['supplier_id']) ? $_POST['supplier_id'] : null;
         $product->cost_price = $_POST['cost_price'];
         $product->selling_price = $_POST['selling_price'];
         $product->stock_quantity = $_POST['stock_quantity'];
@@ -105,9 +109,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get all products and categories
+// Get all products, categories, and suppliers
 $products = $product->read()->fetchAll(PDO::FETCH_ASSOC);
 $categories = $product->getCategories();
+$suppliers = $supplier->read()->fetchAll(PDO::FETCH_ASSOC);
 
 $page_title = 'จัดการสินค้า';
 require_once '../templates/layouts/header.php';
@@ -177,6 +182,11 @@ require_once '../templates/layouts/header.php';
                                 <div class="ml-4">
                                     <div class="text-sm font-medium text-gray-900"><?= h($p['name']) ?></div>
                                     <div class="text-xs text-gray-500"><?= mb_strimwidth(h($p['description']), 0, 40, '...') ?></div>
+                                    <?php if (!empty($p['supplier_name'])): ?>
+                                        <div class="text-xs text-blue-600 mt-1">
+                                            <span class="font-semibold">Supplier:</span> <?= h($p['supplier_name']) ?>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </td>
@@ -290,6 +300,16 @@ require_once '../templates/layouts/header.php';
                         <option value="">เลือกหมวดหมู่</option>
                         <?php foreach ($categories as $cat): ?>
                             <option value="<?= $cat['id'] ?>"><?= h($cat['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">ผู้จัดจำหน่าย</label>
+                    <select name="supplier_id" id="supplier_id" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
+                        <option value="">เลือกผู้จัดจำหน่าย</option>
+                        <?php foreach ($suppliers as $sup): ?>
+                            <option value="<?= $sup['id'] ?>"><?= h($sup['name']) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -451,6 +471,7 @@ require_once '../templates/layouts/header.php';
                 document.getElementById('name').value = data.name;
                 document.getElementById('description').value = data.description || '';
                 document.getElementById('category_id').value = data.category_id;
+                document.getElementById('supplier_id').value = data.supplier_id || '';
                 document.getElementById('cost_price').value = data.cost_price;
                 document.getElementById('selling_price').value = data.selling_price;
                 document.getElementById('stock_quantity').value = data.stock_quantity;
