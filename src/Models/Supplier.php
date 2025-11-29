@@ -102,7 +102,7 @@ class Supplier
         return false;
     }
 
-    // Count Products associated with this Supplier
+    // Count products linked to this supplier
     public function countProducts()
     {
         $query = 'SELECT COUNT(*) as total FROM products WHERE supplier_id = :supplier_id';
@@ -114,26 +114,60 @@ class Supplier
         return $row['total'];
     }
 
-    // Delete Supplier
+    // Count transactions linked to this supplier
+    public function countTransactions()
+    {
+        $query = 'SELECT COUNT(*) as total FROM transactions WHERE supplier_id = :supplier_id';
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':supplier_id', $this->id);
+        $stmt->execute();
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row['total'];
+    }
+
+    // Delete supplier with validation
     public function delete()
     {
         // Check if supplier has associated products
         $productCount = $this->countProducts();
 
-        if ($productCount > 0) {
-            // Return false with product count info
-            return ['success' => false, 'product_count' => $productCount];
+        // Check if supplier has associated transactions
+        $transactionCount = $this->countTransactions();
+
+        // If has products or transactions, prevent deletion
+        if ($productCount > 0 || $transactionCount > 0) {
+            return [
+                'success' => false,
+                'product_count' => $productCount,
+                'transaction_count' => $transactionCount
+            ];
         }
 
-        $query = 'DELETE FROM ' . $this->table . ' WHERE id = :id';
-        $stmt = $this->conn->prepare($query);
+        try {
+            // No dependencies, safe to delete
+            $query = 'DELETE FROM ' . $this->table . ' WHERE id = :id';
+            $stmt = $this->conn->prepare($query);
+            $this->id = htmlspecialchars(strip_tags($this->id));
+            $stmt->bindParam(':id', $this->id);
 
-        $this->id = htmlspecialchars(strip_tags($this->id));
-        $stmt->bindParam(':id', $this->id);
+            if ($stmt->execute()) {
+                return ['success' => true];
+            }
 
-        if ($stmt->execute()) {
-            return ['success' => true];
+            return ['success' => false, 'message' => 'Unknown error occurred'];
+        } catch (\PDOException $e) {
+            // Check for foreign key constraint violation
+            if ($e->getCode() == '23000') {
+                return [
+                    'success' => false,
+                    'message' => 'ไม่สามารถลบได้เนื่องจากมีการใช้งานข้อมูลนี้ในส่วนอื่นของระบบ (Foreign Key Constraint)'
+                ];
+            }
+            return [
+                'success' => false,
+                'message' => 'Database error: ' . $e->getMessage()
+            ];
         }
-        return ['success' => false, 'product_count' => 0];
     }
 }

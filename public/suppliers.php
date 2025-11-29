@@ -53,13 +53,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($result['success']) {
                     echo json_encode(['success' => true, 'message' => 'ลบข้อมูลสำเร็จ']);
                 } else {
-                    // Has associated products
-                    $productCount = $result['product_count'];
-                    if ($productCount > 0) {
-                        throw new Exception("⚠️ ไม่สามารถลบได้! มีสินค้า {$productCount} รายการ ผูกกับผู้จัดจำหน่ายรายนี้อยู่");
-                    } else {
-                        throw new Exception("เกิดข้อผิดพลาดในการลบข้อมูล");
+                    // Check if it's a dependency error or other error
+                    if (isset($result['message'])) {
+                        throw new Exception($result['message']);
                     }
+
+                    // Has associated products or transactions (Legacy check support)
+                    $productCount = $result['product_count'] ?? 0;
+                    $transactionCount = $result['transaction_count'] ?? 0;
+
+                    $errorParts = [];
+                    if ($productCount > 0) {
+                        $errorParts[] = "สินค้า {$productCount} รายการ";
+                    }
+                    if ($transactionCount > 0) {
+                        $errorParts[] = "รายการธุรกรรม {$transactionCount} รายการ";
+                    }
+
+                    $errorMessage = "⚠️ ไม่สามารถลบได้! มี" . implode(" และ ", $errorParts) . " ผูกกับผู้จัดจำหน่ายรายนี้อยู่";
+                    throw new Exception($errorMessage);
                 }
             } else {
                 throw new Exception("เกิดข้อผิดพลาดในการลบข้อมูล");
@@ -258,15 +270,19 @@ require_once '../templates/layouts/header.php';
     function deleteSupplier(id) {
         if (confirm('คุณต้องการลบข้อมูลนี้ใช่หรือไม่?')) {
             $.post('suppliers.php', {
-                action: 'delete',
-                id: id
-            }, function(response) {
-                if (response.success) {
-                    location.reload();
-                } else {
-                    alert(response.message);
-                }
-            }, 'json');
+                    action: 'delete',
+                    id: id
+                }, function(response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert(response.message);
+                    }
+                }, 'json')
+                .fail(function(xhr, status, error) {
+                    alert('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + error + '\nStatus: ' + status + '\nResponse: ' + xhr.responseText);
+                    console.error(xhr.responseText);
+                });
         }
     }
 </script>
