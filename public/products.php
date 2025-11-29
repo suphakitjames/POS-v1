@@ -459,6 +459,12 @@ require_once '../templates/layouts/header.php';
         $('#imagePreview').attr('src', '');
         $('#imagePreviewContainer').addClass('hidden');
 
+        // Make stock quantity editable
+        const stockInput = document.getElementById('stock_quantity');
+        stockInput.removeAttribute('readonly');
+        stockInput.classList.remove('bg-gray-100', 'text-gray-500');
+        stockInput.classList.add('bg-white', 'text-gray-900');
+
         document.getElementById('productModal').classList.remove('hidden');
         document.getElementById('productModal').classList.add('flex');
     }
@@ -497,6 +503,12 @@ require_once '../templates/layouts/header.php';
                     $('#imagePreview').attr('src', '');
                     $('#imagePreviewContainer').addClass('hidden');
                 }
+
+                // Make stock quantity read-only
+                const stockInput = document.getElementById('stock_quantity');
+                stockInput.setAttribute('readonly', true);
+                stockInput.classList.remove('bg-white', 'text-gray-900');
+                stockInput.classList.add('bg-gray-100', 'text-gray-500');
 
                 document.getElementById('productModal').classList.remove('hidden');
                 document.getElementById('productModal').classList.add('flex');
