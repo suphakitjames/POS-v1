@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </svg>
             </div>
             <h2 class="text-2xl font-bold text-gray-900">เข้าสู่ระบบ</h2>
-            <p class="text-gray-600 mt-2">Smart Inventory System</p>
+            <p class="text-gray-600 mt-2">ระบบบริหารจัดการร้านค้า<br><span class="text-blue-600 font-bold">POS Management System</span></p>
         </div>
 
         <?php if ($error): ?>

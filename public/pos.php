@@ -69,9 +69,14 @@ require_once '../templates/layouts/header.php';
                         setTimeout(updateClock, 0);
                     </script>
                 </div>
-                <button onclick="showCloseShiftModal()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all font-semibold">
-                    ปิดกะ
-                </button>
+                <div class="flex gap-2">
+                    <!-- <button onclick="clearCart()" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all font-semibold">
+                        ยกเลิกรายการ
+                    </button> -->
+                    <button onclick="showCloseShiftModal()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all font-semibold">
+                        ปิดกะ
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -117,7 +122,7 @@ require_once '../templates/layouts/header.php';
                     <button id="checkoutBtn" onclick="showPaymentModal()" disabled class="w-full py-4 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-all shadow-lg text-lg disabled:bg-gray-300 disabled:cursor-not-allowed">
                         ชำระเงิน
                     </button>
-                    <button onclick="clearCart()" class="w-full py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-all">
+                    <button onclick="clearCart()" class="w-full px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all font-semibold">
                         ยกเลิกรายการ
                     </button>
                 </div>
@@ -189,56 +194,60 @@ require_once '../templates/layouts/header.php';
                 <button id="confirmPaymentBtn" class="flex-1 px-5 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all shadow-lg">
                     ยืนยันการชำระเงิน
                 </button>
+                <button onclick="clearCart()" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all font-semibold">
+                    ยกเลิกรายการ
+                </button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Close Shift Modal -->
-    <div id="closeShiftModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
-            <div class="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 rounded-t-2xl">
-                <h3 class="text-xl font-bold text-white">ปิดกะการทำงาน</h3>
+<!-- Close Shift Modal -->
+<div id="closeShiftModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+        <div class="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 rounded-t-2xl">
+            <h3 class="text-xl font-bold text-white">ปิดกะการทำงาน</h3>
+        </div>
+        <div class="p-6">
+            <div id="shiftSummary" class="mb-6 space-y-2 text-sm">
+                <div class="flex justify-between py-2 border-b">
+                    <span class="text-gray-600">เงินทอนเริ่มต้น:</span>
+                    <span class="font-semibold" id="summaryStartCash">0.00 ฿</span>
+                </div>
+                <div class="flex justify-between py-2 border-b">
+                    <span class="text-gray-600">ยอดขายเงินสด:</span>
+                    <span class="font-semibold" id="summaryCashSales">0.00 ฿</span>
+                </div>
+                <div class="flex justify-between py-2 border-b">
+                    <span class="text-gray-600">ยอดขาย QR:</span>
+                    <span class="font-semibold" id="summaryQRSales">0.00 ฿</span>
+                </div>
+                <div class="flex justify-between py-2 border-b bg-blue-50 px-2 rounded">
+                    <span class="text-gray-700 font-semibold">เงินสดที่ควรมี:</span>
+                    <span class="font-bold text-blue-600" id="summaryExpectedCash">0.00 ฿</span>
+                </div>
             </div>
-            <div class="p-6">
-                <div id="shiftSummary" class="mb-6 space-y-2 text-sm">
-                    <div class="flex justify-between py-2 border-b">
-                        <span class="text-gray-600">เงินทอนเริ่มต้น:</span>
-                        <span class="font-semibold" id="summaryStartCash">0.00 ฿</span>
-                    </div>
-                    <div class="flex justify-between py-2 border-b">
-                        <span class="text-gray-600">ยอดขายเงินสด:</span>
-                        <span class="font-semibold" id="summaryCashSales">0.00 ฿</span>
-                    </div>
-                    <div class="flex justify-between py-2 border-b">
-                        <span class="text-gray-600">ยอดขาย QR:</span>
-                        <span class="font-semibold" id="summaryQRSales">0.00 ฿</span>
-                    </div>
-                    <div class="flex justify-between py-2 border-b bg-blue-50 px-2 rounded">
-                        <span class="text-gray-700 font-semibold">เงินสดที่ควรมี:</span>
-                        <span class="font-bold text-blue-600" id="summaryExpectedCash">0.00 ฿</span>
-                    </div>
-                </div>
 
-                <div class="mb-6">
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">เงินสดที่นับได้จริง (บาท)</label>
-                    <input type="number" step="0.01" id="endCashInput" class="w-full px-4 py-3 text-lg font-bold text-center rounded-lg border-2 border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all" placeholder="0.00">
-                </div>
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">เงินสดที่นับได้จริง (บาท)</label>
+                <input type="number" step="0.01" id="endCashInput" class="w-full px-4 py-3 text-lg font-bold text-center rounded-lg border-2 border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all" placeholder="0.00">
+            </div>
 
-                <div class="flex gap-3">
-                    <button id="cancelCloseShiftBtn" class="flex-1 px-5 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-all">
-                        ยกเลิก
-                    </button>
-                    <button id="confirmCloseShiftBtn" class="flex-1 px-5 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-all shadow-lg">
-                        ยืนยันปิดกะ
-                    </button>
-                </div>
+            <div class="flex gap-3">
+                <button id="cancelCloseShiftBtn" class="flex-1 px-5 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-all">
+                    ยกเลิก
+                </button>
+                <button id="confirmCloseShiftBtn" class="flex-1 px-5 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-all shadow-lg">
+                    ยืนยันปิดกะ
+                </button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Include QRCode.js Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- Include QRCode.js Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-    <script src="js/pos.js?v=<?= time() ?>"></script>
+<script src="js/pos.js?v=<?= time() ?>"></script>
 
-    <?php require_once '../templates/layouts/footer.php'; ?>
+<?php require_once '../templates/layouts/footer.php'; ?>

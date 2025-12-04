@@ -280,10 +280,15 @@ window.removeFromCart = function(index) {
 
 // Clear Cart
 window.clearCart = function() {
-    if (cart.length === 0) return;
+    console.log('clearCart called. Cart length:', cart.length);
+    if (cart.length === 0) {
+        alert('ตะกร้าสินค้าว่างเปล่า');
+        return;
+    }
     if (confirm('ยกเลิกรายการทั้งหมด?')) {
         cart = [];
         updateCart();
+        console.log('Cart cleared');
     }
 };
 
@@ -452,14 +457,24 @@ window.showCloseShiftModal = function() {
                 document.getElementById('summaryExpectedCash').textContent = expectedCash.toFixed(2) + ' ฿';
                 
                 document.getElementById('endCashInput').value = expectedCash.toFixed(2);
+
+                // Show modal AFTER data is populated
+                const modal = document.getElementById('closeShiftModal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                    console.log('Modal classes updated:', modal.className);
+                } else {
+                    console.error('Modal element not found!');
+                }
+            } else {
+                alert('ไม่สามารถดึงข้อมูลกะได้: ' + data.message);
             }
         })
         .catch(error => {
             console.error('Error fetching summary:', error);
+            alert('เกิดข้อผิดพลาด: ' + error.message);
         });
-    
-    document.getElementById('closeShiftModal').classList.remove('hidden');
-    document.getElementById('closeShiftModal').classList.add('flex');
 };
 
 window.closeCloseShiftModal = function() {
