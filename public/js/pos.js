@@ -500,7 +500,7 @@ window.confirmCloseShift = function() {
     .then(data => {
         console.log('Close shift response data:', data);
         if (data.success) {
-            const diff = data.diff_amount;
+            const diff = parseFloat(data.diff_amount) || 0;
             let msg = 'ปิดกะสำเร็จ!\n\n';
             msg += `เงินสดที่ควรมี: ${parseFloat(data.expected_cash).toFixed(2)} ฿\n`;
             msg += `เงินสดที่นับได้: ${parseFloat(data.end_cash).toFixed(2)} ฿\n`;

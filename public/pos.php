@@ -238,6 +238,6 @@ require_once '../templates/layouts/header.php';
 <!-- Include QRCode.js Library -->
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 
-<script src="js/pos.js"></script>
+<script src="js/pos.js?v=<?= time() ?>"></script>
 
 <?php require_once '../templates/layouts/footer.php'; ?>
