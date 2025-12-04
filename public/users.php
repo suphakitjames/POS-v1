@@ -24,7 +24,7 @@ $user = new User($db);
 
 // Handle AJAX requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Turn off error display for API requests
+    // Turn off error display for API requests to return clean JSON
     ini_set('display_errors', 0);
     error_reporting(E_ALL);
 
@@ -36,12 +36,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $action = $_POST['action'] ?? '';
 
+        // Handle File Upload
+        $profile_image = null;
+        if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {
+            $uploadDir = 'uploads/profiles/';
+            if (!file_exists($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+
+            $fileExtension = strtolower(pathinfo($_FILES['profile_image']['name'], PATHINFO_EXTENSION));
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+
+            if (!in_array($fileExtension, $allowedExtensions)) {
+                throw new Exception('อนุญาตเฉพาะไฟล์รูปภาพ (jpg, jpeg, png, gif) เท่านั้น');
+            }
+
+            $fileName = uniqid() . '.' . $fileExtension;
+            $uploadFile = $uploadDir . $fileName;
+
+            if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $uploadFile)) {
+                $profile_image = $fileName;
+            } else {
+                throw new Exception('เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ');
+            }
+        }
+
         if ($action === 'create') {
             if (empty($_POST['username']) || empty($_POST['password']) || empty($_POST['role'])) {
                 throw new Exception('กรุณากรอกข้อมูลให้ครบถ้วน');
             }
 
+            // Validate Phone
+            if (!empty($_POST['phone']) && !preg_match('/^[0-9]{10}$/', $_POST['phone'])) {
+                throw new Exception('เบอร์โทรศัพท์ต้องเป็นตัวเลข 10 หลัก');
+            }
+
             $user->username = $_POST['username'];
+            $user->first_name = $_POST['first_name'] ?? '';
+            $user->last_name = $_POST['last_name'] ?? '';
+            $user->phone = $_POST['phone'] ?? '';
+            $user->profile_image = $profile_image ?? '';
             $user->password = password_hash($_POST['password'], PASSWORD_DEFAULT);
             $user->role = $_POST['role'];
 
@@ -63,12 +97,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception('ข้อมูลไม่ครบถ้วน');
             }
 
+            // Validate Phone
+            if (!empty($_POST['phone']) && !preg_match('/^[0-9]{10}$/', $_POST['phone'])) {
+                throw new Exception('เบอร์โทรศัพท์ต้องเป็นตัวเลข 10 หลัก');
+            }
+
             $user->id = $_POST['id'];
+
+            // 1. Fetch existing data first to get the old image
+            // This also populates the $user object with DB data, so we must overwrite it afterwards
+            $existingUser = $user->read_single();
+
+            if (!$existingUser) {
+                throw new Exception('ไม่พบผู้ใช้งานที่ต้องการแก้ไข');
+            }
+
+            // 2. Overwrite with new data from form
             $user->username = $_POST['username'];
+            $user->first_name = $_POST['first_name'] ?? '';
+            $user->last_name = $_POST['last_name'] ?? '';
+            $user->phone = $_POST['phone'] ?? '';
             $user->role = $_POST['role'];
 
+            // 3. Handle Image: Use new one if uploaded, otherwise keep old one
+            if ($profile_image) {
+                $user->profile_image = $profile_image;
+            } else {
+                $user->profile_image = $existingUser['profile_image'] ?? '';
+            }
+
+            // 4. Handle Password: Only update if provided
             if (!empty($_POST['password'])) {
                 $user->password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+            } else {
+                // Important: If not updating password, we don't set $user->password 
+                // The update() method in User.php checks if password is empty to decide whether to update it
+                $user->password = '';
             }
 
             if ($user->update()) {
@@ -158,7 +222,9 @@ require_once '../templates/layouts/header.php';
         <table id="usersTable" class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">ชื่อผู้ใช้งาน</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">ผู้ใช้งาน</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">ชื่อ-นามสกุล</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">เบอร์โทร</th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">บทบาท</th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">วันที่สร้าง</th>
                     <th scope="col" class="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">จัดการ</th>
@@ -169,13 +235,23 @@ require_once '../templates/layouts/header.php';
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
-                                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-sm">
-                                    <?= strtoupper(substr($u['username'], 0, 1)) ?>
+                                <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border border-gray-300">
+                                    <?php if (!empty($u['profile_image']) && file_exists('uploads/profiles/' . $u['profile_image'])): ?>
+                                        <img src="uploads/profiles/<?= h($u['profile_image']) ?>" alt="" class="h-full w-full object-cover">
+                                    <?php else: ?>
+                                        <span class="text-gray-500 font-bold text-sm"><?= strtoupper(substr($u['username'], 0, 1)) ?></span>
+                                    <?php endif; ?>
                                 </div>
                                 <div class="ml-4">
                                     <div class="text-sm font-medium text-gray-900"><?= h($u['username']) ?></div>
                                 </div>
                             </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900"><?= h(($u['first_name'] ?? '') . ' ' . ($u['last_name'] ?? '')) ?></div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900"><?= h($u['phone'] ?? '') ?></div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <?php if ($u['role'] === 'admin'): ?>
@@ -220,14 +296,46 @@ require_once '../templates/layouts/header.php';
         <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 rounded-t-xl z-10">
             <h3 id="modalTitle" class="text-xl font-bold text-white">เพิ่มผู้ใช้งาน</h3>
         </div>
-        <form id="userForm" class="p-6">
+        <form id="userForm" class="p-6" enctype="multipart/form-data">
             <input type="hidden" id="userId" name="id">
             <input type="hidden" id="formAction" name="action">
 
             <div class="space-y-4">
+                <!-- Profile Image Upload -->
+                <div class="flex justify-center mb-4">
+                    <div class="relative">
+                        <div class="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border-2 border-dashed border-gray-400 hover:border-blue-500 transition-colors cursor-pointer" onclick="document.getElementById('profile_image').click()">
+                            <img id="previewImage" src="" alt="" class="h-full w-full object-cover hidden">
+                            <div id="placeholderImage" class="text-center">
+                                <svg class="h-8 w-8 text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                <span class="text-xs text-gray-500 block mt-1">รูปโปรไฟล์</span>
+                            </div>
+                        </div>
+                        <input type="file" name="profile_image" id="profile_image" class="hidden" accept="image/*" onchange="previewFile()">
+                    </div>
+                </div>
+
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">ชื่อผู้ใช้งาน <span class="text-red-500">*</span></label>
                     <input type="text" name="username" id="username" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">ชื่อ</label>
+                        <input type="text" name="first_name" id="first_name" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">นามสกุล</label>
+                        <input type="text" name="last_name" id="last_name" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">เบอร์โทรศัพท์</label>
+                    <input type="text" name="phone" id="phone" maxlength="10" pattern="\d{10}" title="กรุณากรอกเบอร์โทรศัพท์ 10 หลัก (ตัวเลขเท่านั้น)" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
                 </div>
 
                 <div>
@@ -281,16 +389,42 @@ require_once '../templates/layouts/header.php';
             },
             "pageLength": 10,
             "order": [
-                [2, "desc"]
+                [4, "desc"]
             ]
         });
     });
+
+    function previewFile() {
+        const preview = document.getElementById('previewImage');
+        const placeholder = document.getElementById('placeholderImage');
+        const file = document.getElementById('profile_image').files[0];
+        const reader = new FileReader();
+
+        reader.onloadend = function() {
+            preview.src = reader.result;
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+        }
+
+        if (file) {
+            reader.readAsDataURL(file);
+        } else {
+            preview.src = "";
+            preview.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+        }
+    }
 
     function openAddModal() {
         document.getElementById('modalTitle').textContent = 'เพิ่มผู้ใช้งาน';
         document.getElementById('formAction').value = 'create';
         document.getElementById('userForm').reset();
         document.getElementById('userId').value = '';
+
+        // Reset Image Preview
+        document.getElementById('previewImage').src = '';
+        document.getElementById('previewImage').classList.add('hidden');
+        document.getElementById('placeholderImage').classList.remove('hidden');
 
         document.getElementById('password').required = true;
         document.getElementById('passwordRequired').classList.remove('hidden');
@@ -318,8 +452,25 @@ require_once '../templates/layouts/header.php';
             success: function(data) {
                 document.getElementById('userId').value = data.id;
                 document.getElementById('username').value = data.username;
+                document.getElementById('first_name').value = data.first_name || '';
+                document.getElementById('last_name').value = data.last_name || '';
+                document.getElementById('phone').value = data.phone || '';
                 document.getElementById('role').value = data.role;
                 document.getElementById('password').value = '';
+
+                // Handle Image Preview
+                const preview = document.getElementById('previewImage');
+                const placeholder = document.getElementById('placeholderImage');
+
+                if (data.profile_image) {
+                    preview.src = 'uploads/profiles/' + data.profile_image;
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                } else {
+                    preview.src = '';
+                    preview.classList.add('hidden');
+                    placeholder.classList.remove('hidden');
+                }
 
                 document.getElementById('userModal').classList.remove('hidden');
                 document.getElementById('userModal').classList.add('flex');
@@ -371,10 +522,22 @@ require_once '../templates/layouts/header.php';
     $('#userForm').on('submit', function(e) {
         e.preventDefault();
 
+        // Use FormData for file upload
+        var formData = new FormData(this);
+
+        // Validate Phone Number
+        const phone = formData.get('phone');
+        if (phone && phone.length !== 10) {
+            alert('กรุณากรอกเบอร์โทรศัพท์ให้ครบ 10 หลัก');
+            return;
+        }
+
         $.ajax({
             url: 'users.php',
             method: 'POST',
-            data: $(this).serialize(),
+            data: formData,
+            contentType: false,
+            processData: false,
             dataType: 'json',
             success: function(response) {
                 alert(response.message);

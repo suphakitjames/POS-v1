@@ -378,8 +378,12 @@ bg-white rounded-xl shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-non
                 <!-- Profile Dropdown -->
                 <div class="relative ml-3">
                     <button type="button" onclick="document.getElementById('profileDropdown').classList.toggle('hidden')" class="flex items-center gap-3 focus:outline-none">
-                        <div class="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold border-2 border-white shadow-sm">
-                            <?= strtoupper(substr($_SESSION['username'] ?? 'A', 0, 1)) ?>
+                        <div class="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold border-2 border-white shadow-sm overflow-hidden">
+                            <?php if (!empty($_SESSION['profile_image']) && file_exists('uploads/profiles/' . $_SESSION['profile_image'])): ?>
+                                <img src="uploads/profiles/<?= h($_SESSION['profile_image']) ?>" alt="" class="h-full w-full object-cover">
+                            <?php else: ?>
+                                <?= strtoupper(substr($_SESSION['username'] ?? 'A', 0, 1)) ?>
+                            <?php endif; ?>
                         </div>
                         <div class="hidden md:block text-left">
                             <p class="text-sm font-semibold text-slate-700"><?= h($_SESSION['username'] ?? 'Admin') ?></p>
