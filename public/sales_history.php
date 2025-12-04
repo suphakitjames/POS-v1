@@ -1,78 +1,35 @@
 <?php
-require_once '../src/Helpers/functions.php';
 require_once '../src/Config/Database.php';
+require_once '../src/Helpers/functions.php';
 require_once '../src/Middleware/AuthMiddleware.php';
 
 use App\Config\Database;
 use App\Middleware\AuthMiddleware;
 
-// Check Authentication (Admin or Staff can view)
+// Check authentication
 AuthMiddleware::check();
 
-$page_title = 'ประวัติการขาย';
-require_once '../templates/layouts/header.php';
-
-// Get users for filter
+// Get database connection
 $db = new Database();
 $conn = $db->connect();
-$usersStmt = $conn->query("SELECT id, username, first_name, last_name FROM users ORDER BY first_name");
-$users = $usersStmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get all users for filter
+$stmt = $conn->query("SELECT id, username, first_name, last_name FROM users ORDER BY first_name ASC, username ASC");
+$users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$pageTitle = "ประวัติการขาย";
+require_once '../templates/layouts/header.php';
 ?>
 
-<!-- DataTables CSS -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
-
-<style>
-    /* Custom DataTables Styling */
-    .dataTables_wrapper .dataTables_length select {
-        padding-right: 2rem;
-        border-radius: 0.5rem;
-        border-color: #e2e8f0;
-    }
-
-    .dataTables_wrapper .dataTables_filter input {
-        border-radius: 0.5rem;
-        border-color: #e2e8f0;
-        padding: 0.5rem;
-        margin-left: 0.5rem;
-    }
-
-    .dt-button {
-        background-color: #10b981 !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 0.5rem !important;
-        padding: 0.5rem 1rem !important;
-        font-weight: 600 !important;
-        transition: all 0.2s !important;
-    }
-
-    .dt-button:hover {
-        background-color: #059669 !important;
-    }
-
-    table.dataTable.no-footer {
-        border-bottom: 1px solid #e2e8f0;
-    }
-</style>
-
-<div class="container mx-auto px-4 py-6">
-    <!-- Header -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 mb-6">
-        <div class="p-6 border-b border-slate-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
-                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        ประวัติการขาย
-                    </h1>
-                    <p class="text-sm text-slate-600 mt-1">รายการขายทั้งหมดพร้อมรายละเอียด</p>
-                </div>
-            </div>
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-slate-200">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-4 flex justify-between items-center">
+            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                </svg>
+                ประวัติการขาย
+            </h2>
         </div>
 
         <!-- Filters -->
@@ -101,7 +58,7 @@ $users = $usersStmt->fetchAll(PDO::FETCH_ASSOC);
                         <option value="all">ทั้งหมด</option>
                         <?php foreach ($users as $user): ?>
                             <option value="<?= $user['id'] ?>">
-                                <?= h(trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')) ?: $user['username']) ?>
+                                <?= htmlspecialchars(trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')) ?: $user['username']) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -294,7 +251,10 @@ $users = $usersStmt->fetchAll(PDO::FETCH_ASSOC);
                 extend: 'excelHtml5',
                 text: '<svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Export Excel',
                 className: 'bg-green-600 text-white hover:bg-green-700 rounded-lg px-4 py-2 font-semibold border-none shadow-sm',
-                title: 'Sales_History_' + new Date().toISOString().split('T')[0]
+                title: 'Sales_History_' + new Date().toISOString().split('T')[0],
+                exportOptions: {
+                    columns: [0, 1, 2, 4, 5]
+                }
             }],
             language: {
                 "lengthMenu": "แสดง _MENU_ รายการ",
@@ -364,61 +324,61 @@ $users = $usersStmt->fetchAll(PDO::FETCH_ASSOC);
         const displayName = fullName.trim() ? fullName.trim() : sale.username;
 
         const content = `
-        <div class="space-y-4">
-            <div class="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                    <span class="text-slate-600">เลขที่ใบเสร็จ:</span>
-                    <span class="font-mono font-bold ml-2">${sale.receipt_number}</span>
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="text-slate-600">เลขที่ใบเสร็จ:</span>
+                        <span class="font-mono font-bold ml-2">${sale.receipt_number}</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-600">วันที่-เวลา:</span>
+                        <span class="font-semibold ml-2">${formatDateTime(sale.sale_date)}</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-600">พนักงาน:</span>
+                        <span class="font-semibold ml-2">${displayName}</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-600">วิธีชำระเงิน:</span>
+                        <span class="font-semibold ml-2">${paymentText}</span>
+                    </div>
                 </div>
-                <div>
-                    <span class="text-slate-600">วันที่-เวลา:</span>
-                    <span class="font-semibold ml-2">${formatDateTime(sale.sale_date)}</span>
-                </div>
-                <div>
-                    <span class="text-slate-600">พนักงาน:</span>
-                    <span class="font-semibold ml-2">${displayName}</span>
-                </div>
-                <div>
-                    <span class="text-slate-600">วิธีชำระเงิน:</span>
-                    <span class="font-semibold ml-2">${paymentText}</span>
-                </div>
-            </div>
 
-            <div class="border-t border-slate-200 pt-4">
-                <h4 class="font-semibold text-slate-800 mb-3">รายการสินค้า</h4>
-                <table class="w-full text-sm">
-                    <thead class="bg-slate-50">
-                        <tr>
-                            <th class="px-3 py-2 text-left">สินค้า</th>
-                            <th class="px-3 py-2 text-center">จำนวน</th>
-                            <th class="px-3 py-2 text-right">ราคา/หน่วย</th>
-                            <th class="px-3 py-2 text-right">รวม</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-200">
-                        ${sale.items.map(item => `
+                <div class="border-t border-slate-200 pt-4">
+                    <h4 class="font-semibold text-slate-800 mb-3">รายการสินค้า</h4>
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-50">
                             <tr>
-                                <td class="px-3 py-2">
-                                    <div class="font-semibold">${item.product_name}</div>
-                                    <div class="text-xs text-slate-500">${item.sku}</div>
-                                </td>
-                                <td class="px-3 py-2 text-center font-semibold">${item.quantity}</td>
-                                <td class="px-3 py-2 text-right">${parseFloat(item.price).toFixed(2)} ฿</td>
-                                <td class="px-3 py-2 text-right font-bold text-blue-600">${parseFloat(item.subtotal).toFixed(2)} ฿</td>
+                                <th class="px-3 py-2 text-left">สินค้า</th>
+                                <th class="px-3 py-2 text-center">จำนวน</th>
+                                <th class="px-3 py-2 text-right">ราคา/หน่วย</th>
+                                <th class="px-3 py-2 text-right">รวม</th>
                             </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            ${sale.items.map(item => `
+                                <tr>
+                                    <td class="px-3 py-2">
+                                        <div class="font-semibold">${item.product_name}</div>
+                                        <div class="text-xs text-slate-500">${item.sku}</div>
+                                    </td>
+                                    <td class="px-3 py-2 text-center font-semibold">${item.quantity}</td>
+                                    <td class="px-3 py-2 text-right">${parseFloat(item.price).toFixed(2)} ฿</td>
+                                    <td class="px-3 py-2 text-right font-bold text-blue-600">${parseFloat(item.subtotal).toFixed(2)} ฿</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
 
-            <div class="border-t-2 border-slate-800 pt-3">
-                <div class="flex justify-between items-center text-xl font-bold">
-                    <span>ยอดรวมทั้งสิ้น:</span>
-                    <span class="text-green-600">${parseFloat(sale.total_amount).toFixed(2)} ฿</span>
+                <div class="border-t-2 border-slate-800 pt-3">
+                    <div class="flex justify-between items-center text-xl font-bold">
+                        <span>ยอดรวมทั้งสิ้น:</span>
+                        <span class="text-green-600">${parseFloat(sale.total_amount).toFixed(2)} ฿</span>
+                    </div>
                 </div>
             </div>
-        </div>
-    `;
+        `;
 
         document.getElementById('saleDetailContent').innerHTML = content;
     }
