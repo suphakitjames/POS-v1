@@ -502,8 +502,8 @@ window.confirmCloseShift = function() {
         if (data.success) {
             const diff = data.diff_amount;
             let msg = 'ปิดกะสำเร็จ!\n\n';
-            msg += `เงินสดที่ควรมี: ${data.expected_cash.toFixed(2)} ฿\n`;
-            msg += `เงินสดที่นับได้: ${data.end_cash.toFixed(2)} ฿\n`;
+            msg += `เงินสดที่ควรมี: ${parseFloat(data.expected_cash).toFixed(2)} ฿\n`;
+            msg += `เงินสดที่นับได้: ${parseFloat(data.end_cash).toFixed(2)} ฿\n`;
             
             if (diff > 0) {
                 msg += `เงินเกิน: +${diff.toFixed(2)} ฿`;
