@@ -328,61 +328,40 @@ window.selectPaymentMethod = function(method) {
     } else if (method === 'qr') {
         document.getElementById('cashFields').classList.add('hidden');
         document.getElementById('qrFields').classList.remove('hidden');
-        generateQRCode();
+        showPromptPayQR();
     } else {
         document.getElementById('cashFields').classList.add('hidden');
         document.getElementById('qrFields').classList.add('hidden');
     }
 };
 
-// Calculate Change
+// Calculate Change (UI Only)
 function calculateChange() {
     const total = parseFloat(document.getElementById('paymentTotal').textContent);
     const received = parseFloat(document.getElementById('receivedAmount').value) || 0;
-    const change = received - total;
-    document.getElementById('changeAmount').textContent = change.toFixed(2) + ' ฿';
-}
-
-// Generate QR Code
-function generateQRCode() {
-    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
-    fetch(`api/generate_qr.php?amount=${total}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const qrDisplay = document.getElementById('qrCodeDisplay');
-                qrDisplay.innerHTML = '';
-                QRCode.toCanvas(data.payload, { width: 256 }, (error, canvas) => {
-                    if (error) {
-                        console.error(error);
-                        qrDisplay.innerHTML = '<p class="text-red-500">ไม่สามารถสร้าง QR Code ได้</p>';
-                    } else {
-                        qrDisplay.appendChild(canvas);
-                    }
-                });
-            } else {
-                document.getElementById('qrCodeDisplay').innerHTML = '<p class="text-red-500">' + data.message + '</p>';
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            document.getElementById('qrCodeDisplay').innerHTML = `<p class="text-red-500 text-sm">Error: ${error.message}</p>`;
-        });
-}
-
-// Confirm Payment - MAIN FUNCTION
-window.confirmPayment = function() {
-    console.log('=== CONFIRM PAYMENT FUNCTION CALLED ===');
-    console.log('Payment method:', selectedPaymentMethod);
-    console.log('Cart:', cart);
     
     if (selectedPaymentMethod === 'cash') {
-        const total = parseFloat(document.getElementById('paymentTotal').textContent);
-        const received = parseFloat(document.getElementById('receivedAmount').value) || 0;
+        const change = received - total;
+        const changeElement = document.getElementById('changeAmount');
         
-        console.log('Total:', total, 'Received:', received);
-        
+        if (change >= 0) {
+            changeElement.textContent = change.toFixed(2) + ' ฿';
+            changeElement.classList.remove('text-red-600');
+            changeElement.classList.add('text-green-600');
+        } else {
+            changeElement.textContent = change.toFixed(2) + ' ฿';
+            changeElement.classList.add('text-red-600');
+            changeElement.classList.remove('text-green-600');
+        }
+    }
+}
+
+// Confirm Payment (API Call)
+window.confirmPayment = function() {
+    const total = parseFloat(document.getElementById('paymentTotal').textContent);
+    const received = parseFloat(document.getElementById('receivedAmount').value) || 0;
+    
+    if (selectedPaymentMethod === 'cash') {
         if (received < total) {
             alert('จำนวนเงินไม่พอ!');
             return;
@@ -396,6 +375,12 @@ window.confirmPayment = function() {
         price: item.price
     }));
     
+    // Disable button to prevent double submit
+    const btn = document.getElementById('confirmPaymentBtn');
+    const originalText = btn.innerText;
+    btn.disabled = true;
+    btn.innerText = 'กำลังบันทึก...';
+    
     console.log('Sending to API:', { items, payment_method: selectedPaymentMethod });
     
     // Send to server
@@ -406,7 +391,9 @@ window.confirmPayment = function() {
         },
         body: JSON.stringify({
             items: items,
-            payment_method: selectedPaymentMethod
+            payment_method: selectedPaymentMethod,
+            amount_received: received,
+            amount_total: total
         })
     })
     .then(response => {
@@ -416,7 +403,7 @@ window.confirmPayment = function() {
     .then(data => {
         console.log('API Response data:', data);
         if (data.success) {
-            alert('บันทึกการขายสำเร็จ!\n\nเลขที่ใบเสร็จ: ' + data.receipt_number);
+            // alert('บันทึกการขายสำเร็จ!\n\nเลขที่ใบเสร็จ: ' + data.receipt_number);
             
             // Open receipt in new window
             window.open(`receipt.php?id=${data.sale_id}`, '_blank', 'width=800,height=600');
@@ -432,6 +419,10 @@ window.confirmPayment = function() {
     .catch(error => {
         console.error('Error:', error);
         alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + error.message);
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerText = originalText;
     });
 };
 
@@ -524,3 +515,32 @@ window.confirmCloseShift = function() {
         alert('เกิดข้อผิดพลาดในการปิดกะ: ' + error.message);
     });
 };
+
+// Show PromptPay QR
+function showPromptPayQR() {
+    const total = parseFloat(document.getElementById('paymentTotal').textContent);
+    const qrContainer = document.getElementById("qrcode");
+    
+    if (!qrContainer) return;
+    
+    qrContainer.innerHTML = '<p class="text-gray-500">กำลังสร้าง QR Code...</p>';
+    
+    fetch('api/get_qrcode.php?amount=' + total)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                qrContainer.innerHTML = "";
+                new QRCode(qrContainer, {
+                    text: data.payload,
+                    width: 200,
+                    height: 200
+                });
+            } else {
+                qrContainer.innerHTML = '<p class="text-red-500">เกิดข้อผิดพลาด: ' + data.message + '</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            qrContainer.innerHTML = '<p class="text-red-500">ไม่สามารถสร้าง QR Code ได้</p>';
+        });
+}

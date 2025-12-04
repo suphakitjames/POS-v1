@@ -259,16 +259,16 @@
                         <span class="ml-3">เบิกสินค้าออก</span>
                     </a>
                 </li>
-
-                <li>
-                    <a href="sales_history.php" class="flex items-center p-3 rounded-xl transition-all duration-200 group <?= $current_page == 'sales_history.php' ? 'text-blue-700 bg-blue-50/80 shadow-sm ring-1 ring-blue-100' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' ?>">
-                        <svg class="w-5 h-5 <?= $current_page == 'sales_history.php' ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600' ?> transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        <span class="ml-3">ประวัติการขาย</span>
-                    </a>
-                </li>
-
+                <?php if ($_SESSION['role'] === 'admin'): ?>
+                    <li>
+                        <a href="sales_history.php" class="flex items-center p-3 rounded-xl transition-all duration-200 group <?= $current_page == 'sales_history.php' ? 'text-blue-700 bg-blue-50/80 shadow-sm ring-1 ring-blue-100' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' ?>">
+                            <svg class="w-5 h-5 <?= $current_page == 'sales_history.php' ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600' ?> transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <span class="ml-3">ประวัติการขาย</span>
+                        </a>
+                    </li>
+                <?php endif; ?>
                 <?php if ($_SESSION['role'] === 'staff'): ?>
                     <!-- Staff Only - POS Menu -->
                     <li>

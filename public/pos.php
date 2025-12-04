@@ -174,8 +174,10 @@ require_once '../templates/layouts/header.php';
             <!-- QR Code Display -->
             <div id="qrFields" class="hidden text-center">
                 <div class="bg-white p-6 rounded-lg border-2 border-dashed border-gray-300">
-                    <div id="qrCodeDisplay" class="mb-4"></div>
-                    <p class="text-sm text-gray-600">สแกน QR Code เพื่อชำระเงิน</p>
+                    <div id="qrcode" class="flex justify-center items-center h-64 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                        <p class="text-gray-400">QR Code จะปรากฏที่นี่</p>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2">สแกน QR Code เพื่อชำระเงิน</p>
                 </div>
             </div>
 
@@ -190,54 +192,53 @@ require_once '../templates/layouts/header.php';
             </div>
         </div>
     </div>
-</div>
 
-<!-- Close Shift Modal -->
-<div id="closeShiftModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
-        <div class="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 rounded-t-2xl">
-            <h3 class="text-xl font-bold text-white">ปิดกะการทำงาน</h3>
-        </div>
-        <div class="p-6">
-            <div id="shiftSummary" class="mb-6 space-y-2 text-sm">
-                <div class="flex justify-between py-2 border-b">
-                    <span class="text-gray-600">เงินทอนเริ่มต้น:</span>
-                    <span class="font-semibold" id="summaryStartCash">0.00 ฿</span>
-                </div>
-                <div class="flex justify-between py-2 border-b">
-                    <span class="text-gray-600">ยอดขายเงินสด:</span>
-                    <span class="font-semibold" id="summaryCashSales">0.00 ฿</span>
-                </div>
-                <div class="flex justify-between py-2 border-b">
-                    <span class="text-gray-600">ยอดขาย QR:</span>
-                    <span class="font-semibold" id="summaryQRSales">0.00 ฿</span>
-                </div>
-                <div class="flex justify-between py-2 border-b bg-blue-50 px-2 rounded">
-                    <span class="text-gray-700 font-semibold">เงินสดที่ควรมี:</span>
-                    <span class="font-bold text-blue-600" id="summaryExpectedCash">0.00 ฿</span>
-                </div>
+    <!-- Close Shift Modal -->
+    <div id="closeShiftModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+            <div class="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 rounded-t-2xl">
+                <h3 class="text-xl font-bold text-white">ปิดกะการทำงาน</h3>
             </div>
+            <div class="p-6">
+                <div id="shiftSummary" class="mb-6 space-y-2 text-sm">
+                    <div class="flex justify-between py-2 border-b">
+                        <span class="text-gray-600">เงินทอนเริ่มต้น:</span>
+                        <span class="font-semibold" id="summaryStartCash">0.00 ฿</span>
+                    </div>
+                    <div class="flex justify-between py-2 border-b">
+                        <span class="text-gray-600">ยอดขายเงินสด:</span>
+                        <span class="font-semibold" id="summaryCashSales">0.00 ฿</span>
+                    </div>
+                    <div class="flex justify-between py-2 border-b">
+                        <span class="text-gray-600">ยอดขาย QR:</span>
+                        <span class="font-semibold" id="summaryQRSales">0.00 ฿</span>
+                    </div>
+                    <div class="flex justify-between py-2 border-b bg-blue-50 px-2 rounded">
+                        <span class="text-gray-700 font-semibold">เงินสดที่ควรมี:</span>
+                        <span class="font-bold text-blue-600" id="summaryExpectedCash">0.00 ฿</span>
+                    </div>
+                </div>
 
-            <div class="mb-6">
-                <label class="block text-sm font-semibold text-gray-700 mb-2">เงินสดที่นับได้จริง (บาท)</label>
-                <input type="number" step="0.01" id="endCashInput" class="w-full px-4 py-3 text-lg font-bold text-center rounded-lg border-2 border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all" placeholder="0.00">
-            </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">เงินสดที่นับได้จริง (บาท)</label>
+                    <input type="number" step="0.01" id="endCashInput" class="w-full px-4 py-3 text-lg font-bold text-center rounded-lg border-2 border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all" placeholder="0.00">
+                </div>
 
-            <div class="flex gap-3">
-                <button id="cancelCloseShiftBtn" class="flex-1 px-5 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-all">
-                    ยกเลิก
-                </button>
-                <button id="confirmCloseShiftBtn" class="flex-1 px-5 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-all shadow-lg">
-                    ยืนยันปิดกะ
-                </button>
+                <div class="flex gap-3">
+                    <button id="cancelCloseShiftBtn" class="flex-1 px-5 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-all">
+                        ยกเลิก
+                    </button>
+                    <button id="confirmCloseShiftBtn" class="flex-1 px-5 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-all shadow-lg">
+                        ยืนยันปิดกะ
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Include QRCode.js Library -->
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <!-- Include QRCode.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-<script src="js/pos.js?v=<?= time() ?>"></script>
+    <script src="js/pos.js?v=<?= time() ?>"></script>
 
-<?php require_once '../templates/layouts/footer.php'; ?>
+    <?php require_once '../templates/layouts/footer.php'; ?>

@@ -25,7 +25,8 @@ $transactionModel = new Transaction($db);
 $filters = [
     'start_date' => $_GET['start_date'] ?? '',
     'end_date' => $_GET['end_date'] ?? '',
-    'type' => $_GET['type'] ?? ''
+    'type' => $_GET['type'] ?? '',
+    'exclude_sales' => true // Add this line to exclude sales
 ];
 
 $transactions = $transactionModel->getMovementHistory($filters);

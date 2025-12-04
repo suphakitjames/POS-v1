@@ -169,6 +169,11 @@ class Transaction
             $query .= ' AND t.type = :type';
         }
 
+        // Exclude Sales
+        if (!empty($filters['exclude_sales'])) {
+            $query .= " AND t.note NOT LIKE 'ขาย - ใบเสร็จ:%'";
+        }
+
         $query .= ' ORDER BY t.created_at DESC';
 
         $stmt = $this->conn->prepare($query);

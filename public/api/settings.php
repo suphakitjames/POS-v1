@@ -45,12 +45,15 @@ try {
 
         try {
             foreach ($_POST as $key => $value) {
-                $stmt = $conn->prepare("
-                    INSERT INTO settings (setting_key, setting_value) 
-                    VALUES (?, ?) 
-                    ON DUPLICATE KEY UPDATE setting_value = ?
-                ");
-                $stmt->execute([$key, $value, $value]);
+                // Try UPDATE first
+                $stmt = $conn->prepare("UPDATE settings SET setting_value = ? WHERE setting_key = ?");
+                $stmt->execute([$value, $key]);
+
+                // If no rows updated, INSERT
+                if ($stmt->rowCount() === 0) {
+                    $stmt = $conn->prepare("INSERT IGNORE INTO settings (setting_key, setting_value) VALUES (?, ?)");
+                    $stmt->execute([$key, $value]);
+                }
             }
 
             $conn->commit();
