@@ -13,7 +13,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $auth = new AuthController();
     if ($auth->login($username, $password)) {
-        redirect('products.php');
+        if ($_SESSION['role'] === 'admin') {
+            redirect('index.php');
+        } else {
+            redirect('pos.php');
+        }
     } else {
         $error = 'ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง';
     }
@@ -84,8 +88,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
 
         <div class="mt-6 text-center text-sm text-gray-500">
-            <p>Default admin: admin / admin123</p>
-            <p>Default User/staff: staff01 / admin123</p>
+            <!-- <p>Default admin: admin / admin123</p>
+            <p>Default User/staff: staff01 / admin123</p> -->
         </div>
     </div>
 

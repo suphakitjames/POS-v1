@@ -26,11 +26,12 @@ class AuthMiddleware
         $_SESSION['last_activity'] = time();
     }
 
-    public static function isAdmin()
+    public static function checkAdmin()
     {
         self::check();
         if ($_SESSION['role'] !== 'admin') {
-            echo "Access Denied: You do not have permission to access this page.";
+            // Redirect non-admins to dashboard or show error
+            header('Location: index.php');
             exit;
         }
     }

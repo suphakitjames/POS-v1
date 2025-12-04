@@ -28,16 +28,14 @@ class Product
         $this->conn = $db;
     }
 
-    // Get all products with category name and supplier name
+    // Get all products with category name
     public function read()
     {
         $query = 'SELECT 
                     p.*, 
-                    c.name as category_name,
-                    s.name as supplier_name 
+                    c.name as category_name
                   FROM ' . $this->table . ' p
                   LEFT JOIN categories c ON p.category_id = c.id
-                  LEFT JOIN suppliers s ON p.supplier_id = s.id
                   ORDER BY p.created_at DESC';
 
         $stmt = $this->conn->prepare($query);
@@ -51,11 +49,9 @@ class Product
     {
         $query = 'SELECT 
                     p.*, 
-                    c.name as category_name,
-                    s.name as supplier_name 
+                    c.name as category_name
                   FROM ' . $this->table . ' p
                   LEFT JOIN categories c ON p.category_id = c.id
-                  LEFT JOIN suppliers s ON p.supplier_id = s.id
                   WHERE p.id = ?
                   LIMIT 0,1';
 
@@ -76,7 +72,6 @@ class Product
                       description = :description,
                       image_path = :image_path,
                       category_id = :category_id,
-                      supplier_id = :supplier_id,
                       cost_price = :cost_price,
                       selling_price = :selling_price,
                       stock_quantity = :stock_quantity,
@@ -91,7 +86,6 @@ class Product
         $stmt->bindParam(':description', $this->description);
         $stmt->bindParam(':image_path', $this->image_path);
         $stmt->bindParam(':category_id', $this->category_id);
-        $stmt->bindParam(':supplier_id', $this->supplier_id);
         $stmt->bindParam(':cost_price', $this->cost_price);
         $stmt->bindParam(':selling_price', $this->selling_price);
         $stmt->bindParam(':stock_quantity', $this->stock_quantity);
@@ -115,7 +109,6 @@ class Product
                       description = :description,
                       image_path = :image_path,
                       category_id = :category_id,
-                      supplier_id = :supplier_id,
                       cost_price = :cost_price,
                       selling_price = :selling_price,
                       stock_quantity = :stock_quantity,
@@ -132,7 +125,6 @@ class Product
         $stmt->bindParam(':description', $this->description);
         $stmt->bindParam(':image_path', $this->image_path);
         $stmt->bindParam(':category_id', $this->category_id);
-        $stmt->bindParam(':supplier_id', $this->supplier_id);
         $stmt->bindParam(':cost_price', $this->cost_price);
         $stmt->bindParam(':selling_price', $this->selling_price);
         $stmt->bindParam(':stock_quantity', $this->stock_quantity);

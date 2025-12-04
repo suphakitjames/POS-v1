@@ -1,17 +1,20 @@
 <?php
+
 namespace App\Config;
 
 use PDO;
 use PDOException;
 
-class Database {
+class Database
+{
     private $host = 'localhost';
     private $db_name = 'smart_inventory';
     private $username = 'root';
     private $password = '';
     private $conn;
 
-    public function connect() {
+    public function connect()
+    {
         $this->conn = null;
 
         try {
@@ -23,7 +26,7 @@ class Database {
             ];
 
             $this->conn = new PDO($dsn, $this->username, $this->password, $options);
-        } catch(PDOException $e) {
+        } catch (PDOException $e) {
             echo "Connection error: " . $e->getMessage();
             exit;
         }
