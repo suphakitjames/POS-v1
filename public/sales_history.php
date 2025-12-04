@@ -15,7 +15,7 @@ require_once '../templates/layouts/header.php';
 // Get users for filter
 $db = new Database();
 $conn = $db->connect();
-$usersStmt = $conn->query("SELECT id, username FROM users ORDER BY username");
+$usersStmt = $conn->query("SELECT id, username, first_name, last_name FROM users ORDER BY first_name");
 $users = $usersStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
@@ -100,7 +100,9 @@ $users = $usersStmt->fetchAll(PDO::FETCH_ASSOC);
                     <select id="userId" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <option value="all">ทั้งหมด</option>
                         <?php foreach ($users as $user): ?>
-                            <option value="<?= $user['id'] ?>"><?= h($user['username']) ?></option>
+                            <option value="<?= $user['id'] ?>">
+                                <?= h(trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')) ?: $user['username']) ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -257,11 +259,15 @@ $users = $usersStmt->fetchAll(PDO::FETCH_ASSOC);
                 'credit': 'บัตร'
             } [sale.payment_method] || sale.payment_method;
 
+            // Display Name Logic: First Name + Last Name, fallback to Username
+            const fullName = (sale.first_name || '') + ' ' + (sale.last_name || '');
+            const displayName = fullName.trim() ? fullName.trim() : sale.username;
+
             return `
                 <tr>
                     <td class="font-mono font-semibold text-blue-600">${sale.receipt_number}</td>
                     <td class="text-slate-600">${formatDateTime(sale.sale_date)}</td>
-                    <td>${sale.username}</td>
+                    <td>${displayName}</td>
                     <td class="text-center"><span class="px-2 py-1 bg-slate-100 rounded-full text-sm">${sale.item_count} รายการ</span></td>
                     <td class="text-right font-bold text-green-600">${parseFloat(sale.total_amount).toFixed(2)} ฿</td>
                     <td>${paymentIcon} ${paymentText}</td>
@@ -353,6 +359,10 @@ $users = $usersStmt->fetchAll(PDO::FETCH_ASSOC);
             'credit': '💳 บัตร'
         } [sale.payment_method] || sale.payment_method;
 
+        // Display Name Logic for Modal
+        const fullName = (sale.first_name || '') + ' ' + (sale.last_name || '');
+        const displayName = fullName.trim() ? fullName.trim() : sale.username;
+
         const content = `
         <div class="space-y-4">
             <div class="grid grid-cols-2 gap-4 text-sm">
@@ -366,7 +376,7 @@ $users = $usersStmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
                 <div>
                     <span class="text-slate-600">พนักงาน:</span>
-                    <span class="font-semibold ml-2">${sale.username}</span>
+                    <span class="font-semibold ml-2">${displayName}</span>
                 </div>
                 <div>
                     <span class="text-slate-600">วิธีชำระเงิน:</span>

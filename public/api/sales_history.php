@@ -68,7 +68,7 @@ try {
         $total = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
         // Get data
-        $query = "SELECT s.*, u.username,
+        $query = "SELECT s.*, u.username, u.first_name, u.last_name,
                          (SELECT COUNT(*) FROM sale_items WHERE sale_id = s.id) as item_count
                   FROM sales s
                   LEFT JOIN users u ON s.user_id = u.id
@@ -107,7 +107,7 @@ try {
         }
 
         // Get sale header
-        $query = "SELECT s.*, u.username 
+        $query = "SELECT s.*, u.username, u.first_name, u.last_name
                   FROM sales s
                   LEFT JOIN users u ON s.user_id = u.id
                   WHERE s.id = :sale_id";
