@@ -183,28 +183,57 @@ require_once '../templates/layouts/header.php';
             var quantity = parseInt($('#quantity').val());
 
             if (quantity > currentStock) {
-                alert('จำนวนที่เบิกเกินกว่าสินค้าคงเหลือในสต็อก!');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'แจ้งเตือน',
+                    text: 'จำนวนที่เบิกเกินกว่าสินค้าคงเหลือในสต็อก!',
+                    confirmButtonText: 'ตกลง'
+                });
                 return;
             }
 
-            if (!confirm('ยืนยันการเบิกสินค้า?')) return;
-
-            $.ajax({
-                url: 'stock_out.php',
-                method: 'POST',
-                data: $(this).serialize(),
-                dataType: 'json',
-                success: function(response) {
-                    if (response.success) {
-                        alert(response.message);
-                        location.reload();
-                    } else {
-                        alert('Error: ' + response.message);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error(xhr.responseText);
-                    alert('เกิดข้อผิดพลาด: ' + error);
+            Swal.fire({
+                title: 'ยืนยันการเบิกสินค้า?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'ยืนยัน',
+                cancelButtonText: 'ยกเลิก'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: 'stock_out.php',
+                        method: 'POST',
+                        data: $(this).serialize(),
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'สำเร็จ!',
+                                    text: response.message,
+                                    confirmButtonText: 'ตกลง'
+                                }).then(() => location.reload());
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'เกิดข้อผิดพลาด!',
+                                    text: response.message,
+                                    confirmButtonText: 'ตกลง'
+                                });
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error(xhr.responseText);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'เกิดข้อผิดพลาด!',
+                                text: error,
+                                confirmButtonText: 'ตกลง'
+                            });
+                        }
+                    });
                 }
             });
         });

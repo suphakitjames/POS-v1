@@ -51,40 +51,36 @@ require_once '../templates/layouts/header.php';
 </div>
 
 <script>
-    // Settings page JavaScript - using jQuery from header.php
     jQuery(document).ready(function($) {
-        console.log('=== SETTINGS PAGE LOADED ===');
-        console.log('jQuery version:', $.fn.jquery);
-
         // Load existing settings
         function loadSettings() {
-            console.log('Loading settings...');
             $.ajax({
                 url: 'api/settings.php',
                 method: 'GET',
                 dataType: 'json',
                 success: function(response) {
-                    console.log('Settings loaded successfully:', response);
                     if (response.success && response.data) {
                         if (response.data.promptpay_id) {
                             $('#promptpay_id').val(response.data.promptpay_id);
-                            console.log('PromptPay ID set to:', response.data.promptpay_id);
                         }
-                    } else {
-                        console.warn('No settings data returned');
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('=== ERROR LOADING SETTINGS ===');
-                    console.error('Status:', status);
-                    console.error('Error:', error);
-                    console.error('Response:', xhr.responseText);
-                    console.error('Status Code:', xhr.status);
-
+                    console.error('Error loading settings:', error);
                     if (xhr.status === 500) {
-                        alert('Internal Server Error: กรุณาตรวจสอบ database และ API');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Internal Server Error',
+                            text: 'กรุณาตรวจสอบ database และ API',
+                            confirmButtonText: 'ตกลง'
+                        });
                     } else {
-                        alert('ไม่สามารถโหลดข้อมูลการตั้งค่าได้: ' + error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'เกิดข้อผิดพลาด!',
+                            text: 'ไม่สามารถโหลดข้อมูลการตั้งค่าได้: ' + error,
+                            confirmButtonText: 'ตกลง'
+                        });
                     }
                 }
             });
@@ -93,11 +89,8 @@ require_once '../templates/layouts/header.php';
         // Save settings
         $('#settingsForm').on('submit', function(e) {
             e.preventDefault();
-            console.log('=== SAVING SETTINGS ===');
 
             const formData = $(this).serialize();
-            console.log('Form data:', formData);
-
             const $submitBtn = $('#saveSettingsBtn');
             const originalHtml = $submitBtn.html();
             $submitBtn.prop('disabled', true).html('<span class="loading">กำลังบันทึก...</span>');
@@ -108,30 +101,42 @@ require_once '../templates/layouts/header.php';
                 data: formData,
                 dataType: 'json',
                 success: function(response) {
-                    console.log('=== SAVE SUCCESS ===');
-                    console.log('Response:', response);
                     $submitBtn.prop('disabled', false).html(originalHtml);
 
                     if (response.success) {
-                        alert(response.message || 'บันทึกการตั้งค่าเรียบร้อยแล้ว');
-                        loadSettings(); // Reload to confirm
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'สำเร็จ!',
+                            text: response.message || 'บันทึกการตั้งค่าเรียบร้อยแล้ว',
+                            confirmButtonText: 'ตกลง'
+                        });
+                        loadSettings();
                     } else {
-                        alert('เกิดข้อผิดพลาด: ' + (response.message || 'Unknown error'));
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'เกิดข้อผิดพลาด!',
+                            text: response.message || 'Unknown error',
+                            confirmButtonText: 'ตกลง'
+                        });
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('=== ERROR SAVING SETTINGS ===');
-                    console.error('Status:', status);
-                    console.error('Error:', error);
-                    console.error('Response:', xhr.responseText);
-                    console.error('Status Code:', xhr.status);
-
                     $submitBtn.prop('disabled', false).html(originalHtml);
 
                     if (xhr.status === 500) {
-                        alert('Internal Server Error: กรุณาตรวจสอบ database และ API\n\n' + xhr.responseText);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Internal Server Error',
+                            text: 'กรุณาตรวจสอบ database และ API',
+                            confirmButtonText: 'ตกลง'
+                        });
                     } else {
-                        alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'เกิดข้อผิดพลาด!',
+                            text: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + error,
+                            confirmButtonText: 'ตกลง'
+                        });
                     }
                 }
             });

@@ -24,11 +24,9 @@ $user = new User($db);
 
 // Handle AJAX requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Turn off error display for API requests to return clean JSON
     ini_set('display_errors', 0);
     error_reporting(E_ALL);
 
-    // Clear any previous output
     if (ob_get_length()) ob_clean();
 
     header('Content-Type: application/json');
@@ -66,7 +64,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception('กรุณากรอกข้อมูลให้ครบถ้วน');
             }
 
-            // Validate Phone
             if (!empty($_POST['phone']) && !preg_match('/^[0-9]{10}$/', $_POST['phone'])) {
                 throw new Exception('เบอร์โทรศัพท์ต้องเป็นตัวเลข 10 หลัก');
             }
@@ -97,41 +94,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception('ข้อมูลไม่ครบถ้วน');
             }
 
-            // Validate Phone
             if (!empty($_POST['phone']) && !preg_match('/^[0-9]{10}$/', $_POST['phone'])) {
                 throw new Exception('เบอร์โทรศัพท์ต้องเป็นตัวเลข 10 หลัก');
             }
 
             $user->id = $_POST['id'];
-
-            // 1. Fetch existing data first to get the old image
-            // This also populates the $user object with DB data, so we must overwrite it afterwards
             $existingUser = $user->read_single();
 
             if (!$existingUser) {
                 throw new Exception('ไม่พบผู้ใช้งานที่ต้องการแก้ไข');
             }
 
-            // 2. Overwrite with new data from form
             $user->username = $_POST['username'];
             $user->first_name = $_POST['first_name'] ?? '';
             $user->last_name = $_POST['last_name'] ?? '';
             $user->phone = $_POST['phone'] ?? '';
             $user->role = $_POST['role'];
 
-            // 3. Handle Image: Use new one if uploaded, otherwise keep old one
             if ($profile_image) {
                 $user->profile_image = $profile_image;
             } else {
                 $user->profile_image = $existingUser['profile_image'] ?? '';
             }
 
-            // 4. Handle Password: Only update if provided
             if (!empty($_POST['password'])) {
                 $user->password = password_hash($_POST['password'], PASSWORD_DEFAULT);
             } else {
-                // Important: If not updating password, we don't set $user->password 
-                // The update() method in User.php checks if password is empty to decide whether to update it
                 $user->password = '';
             }
 
@@ -150,7 +138,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $user->id = $_POST['id'];
 
-            // Prevent deleting self
             if ($user->id == $_SESSION['user_id']) {
                 echo json_encode(['success' => false, 'message' => 'ไม่สามารถลบบัญชีของตัวเองได้']);
                 exit;
@@ -255,13 +242,9 @@ require_once '../templates/layouts/header.php';
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <?php if ($u['role'] === 'admin'): ?>
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                    ผู้ดูแลระบบ
-                                </span>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">ผู้ดูแลระบบ</span>
                             <?php else: ?>
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                    พนักงาน
-                                </span>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">พนักงาน</span>
                             <?php endif; ?>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -335,7 +318,7 @@ require_once '../templates/layouts/header.php';
 
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">เบอร์โทรศัพท์</label>
-                    <input type="text" name="phone" id="phone" maxlength="10" pattern="\d{10}" title="กรุณากรอกเบอร์โทรศัพท์ 10 หลัก (ตัวเลขเท่านั้น)" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
+                    <input type="text" name="phone" id="phone" maxlength="10" pattern="\d{10}" title="กรุณากรอกเบอร์โทรศัพท์ 10 หลัก" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
                 </div>
 
                 <div>
@@ -354,12 +337,8 @@ require_once '../templates/layouts/header.php';
             </div>
 
             <div class="mt-6 flex gap-3 justify-end border-t pt-6">
-                <button type="button" onclick="closeModal()" class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors">
-                    ยกเลิก
-                </button>
-                <button type="submit" class="px-5 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-sm">
-                    บันทึก
-                </button>
+                <button type="button" onclick="closeModal()" class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors">ยกเลิก</button>
+                <button type="submit" class="px-5 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-sm">บันทึก</button>
             </div>
         </form>
     </div>
@@ -377,9 +356,7 @@ require_once '../templates/layouts/header.php';
                 "sInfo": "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
                 "sInfoEmpty": "แสดง 0 ถึง 0 จาก 0 รายการ",
                 "sInfoFiltered": "(กรองข้อมูล _MAX_ ทุกรายการ)",
-                "sInfoPostFix": "",
                 "sSearch": "ค้นหา:",
-                "sUrl": "",
                 "oPaginate": {
                     "sFirst": "หน้าแรก",
                     "sPrevious": "ก่อนหน้า",
@@ -421,7 +398,6 @@ require_once '../templates/layouts/header.php';
         document.getElementById('userForm').reset();
         document.getElementById('userId').value = '';
 
-        // Reset Image Preview
         document.getElementById('previewImage').src = '';
         document.getElementById('previewImage').classList.add('hidden');
         document.getElementById('placeholderImage').classList.remove('hidden');
@@ -458,7 +434,6 @@ require_once '../templates/layouts/header.php';
                 document.getElementById('role').value = data.role;
                 document.getElementById('password').value = '';
 
-                // Handle Image Preview
                 const preview = document.getElementById('previewImage');
                 const placeholder = document.getElementById('placeholderImage');
 
@@ -478,9 +453,19 @@ require_once '../templates/layouts/header.php';
             error: function(xhr, status, error) {
                 try {
                     var response = JSON.parse(xhr.responseText);
-                    alert('เกิดข้อผิดพลาด: ' + (response.message || error));
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด!',
+                        text: response.message || error,
+                        confirmButtonText: 'ตกลง'
+                    });
                 } catch (e) {
-                    alert('เกิดข้อผิดพลาด: ' + error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด!',
+                        text: error,
+                        confirmButtonText: 'ตกลง'
+                    });
                 }
             }
         });
@@ -492,43 +477,78 @@ require_once '../templates/layouts/header.php';
     }
 
     function deleteUser(id) {
-        if (confirm('คุณต้องการลบผู้ใช้งานนี้หรือไม่?')) {
-            $.ajax({
-                url: 'users.php',
-                method: 'POST',
-                data: {
-                    action: 'delete',
-                    id: id
-                },
-                dataType: 'json',
-                success: function(response) {
-                    alert(response.message);
-                    if (response.success) {
-                        location.reload();
+        Swal.fire({
+            title: 'ยืนยันการลบ?',
+            text: 'คุณต้องการลบผู้ใช้งานนี้หรือไม่?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'ใช่, ลบเลย!',
+            cancelButtonText: 'ยกเลิก'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: 'users.php',
+                    method: 'POST',
+                    data: {
+                        action: 'delete',
+                        id: id
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'ลบสำเร็จ!',
+                                text: response.message,
+                                confirmButtonText: 'ตกลง'
+                            }).then(() => location.reload());
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'เกิดข้อผิดพลาด!',
+                                text: response.message,
+                                confirmButtonText: 'ตกลง'
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'เกิดข้อผิดพลาด!',
+                                text: response.message || error,
+                                confirmButtonText: 'ตกลง'
+                            });
+                        } catch (e) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'เกิดข้อผิดพลาด!',
+                                text: error,
+                                confirmButtonText: 'ตกลง'
+                            });
+                        }
                     }
-                },
-                error: function(xhr, status, error) {
-                    try {
-                        var response = JSON.parse(xhr.responseText);
-                        alert('เกิดข้อผิดพลาด: ' + (response.message || error));
-                    } catch (e) {
-                        alert('เกิดข้อผิดพลาด: ' + error);
-                    }
-                }
-            });
-        }
+                });
+            }
+        });
     }
 
     $('#userForm').on('submit', function(e) {
         e.preventDefault();
 
-        // Use FormData for file upload
         var formData = new FormData(this);
 
-        // Validate Phone Number
         const phone = formData.get('phone');
         if (phone && phone.length !== 10) {
-            alert('กรุณากรอกเบอร์โทรศัพท์ให้ครบ 10 หลัก');
+            Swal.fire({
+                icon: 'warning',
+                title: 'แจ้งเตือน',
+                text: 'กรุณากรอกเบอร์โทรศัพท์ให้ครบ 10 หลัก',
+                confirmButtonText: 'ตกลง'
+            });
             return;
         }
 
@@ -540,17 +560,38 @@ require_once '../templates/layouts/header.php';
             processData: false,
             dataType: 'json',
             success: function(response) {
-                alert(response.message);
                 if (response.success) {
-                    location.reload();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'สำเร็จ!',
+                        text: response.message,
+                        confirmButtonText: 'ตกลง'
+                    }).then(() => location.reload());
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด!',
+                        text: response.message,
+                        confirmButtonText: 'ตกลง'
+                    });
                 }
             },
             error: function(xhr, status, error) {
                 try {
                     var response = JSON.parse(xhr.responseText);
-                    alert('เกิดข้อผิดพลาด: ' + (response.message || error));
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด!',
+                        text: response.message || error,
+                        confirmButtonText: 'ตกลง'
+                    });
                 } catch (e) {
-                    alert('เกิดข้อผิดพลาดในการบันทึก: ' + error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด!',
+                        text: 'เกิดข้อผิดพลาดในการบันทึก: ' + error,
+                        confirmButtonText: 'ตกลง'
+                    });
                 }
             }
         });

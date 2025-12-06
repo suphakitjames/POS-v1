@@ -53,15 +53,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($result['success']) {
                     echo json_encode(['success' => true, 'message' => 'ลบข้อมูลสำเร็จ']);
                 } else {
-                    // Check if it's a dependency error or other error
                     if (isset($result['message'])) {
                         throw new Exception($result['message']);
                     }
-
-                    // Has associated products or transactions (Legacy check support)
                     $productCount = $result['product_count'] ?? 0;
                     $transactionCount = $result['transaction_count'] ?? 0;
-
                     $errorParts = [];
                     if ($productCount > 0) {
                         $errorParts[] = "สินค้า {$productCount} รายการ";
@@ -69,8 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($transactionCount > 0) {
                         $errorParts[] = "รายการธุรกรรม {$transactionCount} รายการ";
                     }
-
-                    $errorMessage = "⚠️ ไม่สามารถลบได้! มี" . implode(" และ ", $errorParts) . " ผูกกับผู้จัดจำหน่ายรายนี้อยู่";
+                    $errorMessage = "ไม่สามารถลบได้! มี" . implode(" และ ", $errorParts) . " ผูกกับผู้จัดจำหน่ายรายนี้อยู่";
                     throw new Exception($errorMessage);
                 }
             } else {
@@ -223,14 +218,29 @@ require_once '../templates/layouts/header.php';
                 dataType: 'json',
                 success: function(response) {
                     if (response.success) {
-                        location.reload();
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'สำเร็จ!',
+                            text: response.message,
+                            confirmButtonText: 'ตกลง'
+                        }).then(() => location.reload());
                     } else {
-                        alert('Error: ' + response.message);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'เกิดข้อผิดพลาด!',
+                            text: response.message,
+                            confirmButtonText: 'ตกลง'
+                        });
                     }
                 },
                 error: function(xhr, status, error) {
                     console.error(xhr.responseText);
-                    alert('เกิดข้อผิดพลาด: ' + error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด!',
+                        text: error,
+                        confirmButtonText: 'ตกลง'
+                    });
                 }
             });
         });
@@ -258,7 +268,12 @@ require_once '../templates/layouts/header.php';
                 $('#modalTitle').text('แก้ไขข้อมูลคู่ค้า');
                 $('#supplierModal').removeClass('hidden');
             } else {
-                alert(response.message);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด!',
+                    text: response.message,
+                    confirmButtonText: 'ตกลง'
+                });
             }
         }, 'json');
     }
@@ -268,22 +283,47 @@ require_once '../templates/layouts/header.php';
     }
 
     function deleteSupplier(id) {
-        if (confirm('คุณต้องการลบข้อมูลนี้ใช่หรือไม่?')) {
-            $.post('suppliers.php', {
+        Swal.fire({
+            title: 'ยืนยันการลบ?',
+            text: 'คุณต้องการลบข้อมูลนี้ใช่หรือไม่?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'ใช่, ลบเลย!',
+            cancelButtonText: 'ยกเลิก'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.post('suppliers.php', {
                     action: 'delete',
                     id: id
                 }, function(response) {
                     if (response.success) {
-                        location.reload();
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'ลบสำเร็จ!',
+                            text: response.message,
+                            confirmButtonText: 'ตกลง'
+                        }).then(() => location.reload());
                     } else {
-                        alert(response.message);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'ไม่สามารถลบได้!',
+                            text: response.message,
+                            confirmButtonText: 'ตกลง'
+                        });
                     }
-                }, 'json')
-                .fail(function(xhr, status, error) {
-                    alert('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + error + '\nStatus: ' + status + '\nResponse: ' + xhr.responseText);
+                }, 'json').fail(function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด!',
+                        text: 'เกิดข้อผิดพลาดในการเชื่อมต่อ',
+                        confirmButtonText: 'ตกลง'
+                    });
                     console.error(xhr.responseText);
                 });
-        }
+            }
+        });
     }
 </script>
 

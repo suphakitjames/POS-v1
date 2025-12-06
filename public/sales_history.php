@@ -161,11 +161,10 @@ require_once '../templates/layouts/header.php';
         const paymentMethod = document.getElementById('paymentMethod').value;
         const userId = document.getElementById('userId').value;
 
-        // Fetch all data for DataTables
         const params = new URLSearchParams({
             action: 'list',
             page: 1,
-            limit: 10000, // Fetch large amount for client-side processing
+            limit: 10000,
             date_from: dateFrom,
             date_to: dateTo,
             payment_method: paymentMethod,
@@ -186,12 +185,22 @@ require_once '../templates/layouts/header.php';
                     updateSummary(result.data);
                     initializeDataTable();
                 } else {
-                    alert('เกิดข้อผิดพลาด: ' + result.message);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด!',
+                        text: result.message,
+                        confirmButtonText: 'ตกลง'
+                    });
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('ไม่สามารถโหลดข้อมูลได้');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด!',
+                    text: 'ไม่สามารถโหลดข้อมูลได้',
+                    confirmButtonText: 'ตกลง'
+                });
             });
     }
 
@@ -216,7 +225,6 @@ require_once '../templates/layouts/header.php';
                 'credit': 'บัตร'
             } [sale.payment_method] || sale.payment_method;
 
-            // Display Name Logic: First Name + Last Name, fallback to Username
             const fullName = (sale.first_name || '') + ' ' + (sale.last_name || '');
             const displayName = fullName.trim() ? fullName.trim() : sale.username;
 
@@ -273,7 +281,7 @@ require_once '../templates/layouts/header.php';
             pageLength: 10,
             order: [
                 [1, 'desc']
-            ] // Sort by Date desc
+            ]
         });
     }
 
@@ -290,7 +298,6 @@ require_once '../templates/layouts/header.php';
         document.getElementById('avgItems').textContent = avgItems.toFixed(1);
     }
 
-    // View sale detail
     async function viewSaleDetail(saleId) {
         currentSaleId = saleId;
 
@@ -303,15 +310,24 @@ require_once '../templates/layouts/header.php';
                 document.getElementById('saleDetailModal').classList.remove('hidden');
                 document.getElementById('saleDetailModal').classList.add('flex');
             } else {
-                alert('เกิดข้อผิดพลาด: ' + result.message);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด!',
+                    text: result.message,
+                    confirmButtonText: 'ตกลง'
+                });
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('ไม่สามารถโหลดข้อมูลได้');
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด!',
+                text: 'ไม่สามารถโหลดข้อมูลได้',
+                confirmButtonText: 'ตกลง'
+            });
         }
     }
 
-    // Display sale detail in modal
     function displaySaleDetail(sale) {
         const paymentText = {
             'cash': '💵 เงินสด',
@@ -319,49 +335,25 @@ require_once '../templates/layouts/header.php';
             'credit': '💳 บัตร'
         } [sale.payment_method] || sale.payment_method;
 
-        // Display Name Logic for Modal
         const fullName = (sale.first_name || '') + ' ' + (sale.last_name || '');
         const displayName = fullName.trim() ? fullName.trim() : sale.username;
 
         const content = `
             <div class="space-y-4">
                 <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                        <span class="text-slate-600">เลขที่ใบเสร็จ:</span>
-                        <span class="font-mono font-bold ml-2">${sale.receipt_number}</span>
-                    </div>
-                    <div>
-                        <span class="text-slate-600">วันที่-เวลา:</span>
-                        <span class="font-semibold ml-2">${formatDateTime(sale.sale_date)}</span>
-                    </div>
-                    <div>
-                        <span class="text-slate-600">พนักงาน:</span>
-                        <span class="font-semibold ml-2">${displayName}</span>
-                    </div>
-                    <div>
-                        <span class="text-slate-600">วิธีชำระเงิน:</span>
-                        <span class="font-semibold ml-2">${paymentText}</span>
-                    </div>
+                    <div><span class="text-slate-600">เลขที่ใบเสร็จ:</span><span class="font-mono font-bold ml-2">${sale.receipt_number}</span></div>
+                    <div><span class="text-slate-600">วันที่-เวลา:</span><span class="font-semibold ml-2">${formatDateTime(sale.sale_date)}</span></div>
+                    <div><span class="text-slate-600">พนักงาน:</span><span class="font-semibold ml-2">${displayName}</span></div>
+                    <div><span class="text-slate-600">วิธีชำระเงิน:</span><span class="font-semibold ml-2">${paymentText}</span></div>
                 </div>
-
                 <div class="border-t border-slate-200 pt-4">
                     <h4 class="font-semibold text-slate-800 mb-3">รายการสินค้า</h4>
                     <table class="w-full text-sm">
-                        <thead class="bg-slate-50">
-                            <tr>
-                                <th class="px-3 py-2 text-left">สินค้า</th>
-                                <th class="px-3 py-2 text-center">จำนวน</th>
-                                <th class="px-3 py-2 text-right">ราคา/หน่วย</th>
-                                <th class="px-3 py-2 text-right">รวม</th>
-                            </tr>
-                        </thead>
+                        <thead class="bg-slate-50"><tr><th class="px-3 py-2 text-left">สินค้า</th><th class="px-3 py-2 text-center">จำนวน</th><th class="px-3 py-2 text-right">ราคา/หน่วย</th><th class="px-3 py-2 text-right">รวม</th></tr></thead>
                         <tbody class="divide-y divide-slate-200">
                             ${sale.items.map(item => `
                                 <tr>
-                                    <td class="px-3 py-2">
-                                        <div class="font-semibold">${item.product_name}</div>
-                                        <div class="text-xs text-slate-500">${item.sku}</div>
-                                    </td>
+                                    <td class="px-3 py-2"><div class="font-semibold">${item.product_name}</div><div class="text-xs text-slate-500">${item.sku}</div></td>
                                     <td class="px-3 py-2 text-center font-semibold">${item.quantity}</td>
                                     <td class="px-3 py-2 text-right">${parseFloat(item.price).toFixed(2)} ฿</td>
                                     <td class="px-3 py-2 text-right font-bold text-blue-600">${parseFloat(item.subtotal).toFixed(2)} ฿</td>
@@ -370,7 +362,6 @@ require_once '../templates/layouts/header.php';
                         </tbody>
                     </table>
                 </div>
-
                 <div class="border-t-2 border-slate-800 pt-3">
                     <div class="flex justify-between items-center text-xl font-bold">
                         <span>ยอดรวมทั้งสิ้น:</span>
@@ -379,7 +370,6 @@ require_once '../templates/layouts/header.php';
                 </div>
             </div>
         `;
-
         document.getElementById('saleDetailContent').innerHTML = content;
     }
 

@@ -514,7 +514,12 @@ require_once '../templates/layouts/header.php';
                 document.getElementById('productModal').classList.add('flex');
             },
             error: function(xhr, status, error) {
-                alert('เกิดข้อผิดพลาด: ' + error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด!',
+                    text: error,
+                    confirmButtonText: 'ตกลง'
+                });
             }
         });
     }
@@ -543,7 +548,12 @@ require_once '../templates/layouts/header.php';
         const qty = document.getElementById('printQty').value;
 
         if (qty < 1) {
-            alert('กรุณาระบุจำนวนอย่างน้อย 1 ดวง');
+            Swal.fire({
+                icon: 'warning',
+                title: 'แจ้งเตือน',
+                text: 'กรุณาระบุจำนวนอย่างน้อย 1 ดวง',
+                confirmButtonText: 'ตกลง'
+            });
             return;
         }
 
@@ -553,28 +563,55 @@ require_once '../templates/layouts/header.php';
     }
 
     function deleteProduct(id) {
-        if (confirm('คุณต้องการลบสินค้านี้หรือไม่?')) {
-
-            $.ajax({
-                url: 'products.php',
-                method: 'POST',
-                data: {
-                    action: 'delete',
-                    id: id
-                },
-                dataType: 'json',
-                success: function(response) {
-
-                    alert(response.message);
-                    if (response.success) {
-                        location.reload();
+        Swal.fire({
+            title: 'ยืนยันการลบ?',
+            text: 'คุณต้องการลบสินค้านี้หรือไม่?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'ใช่, ลบเลย!',
+            cancelButtonText: 'ยกเลิก'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: 'products.php',
+                    method: 'POST',
+                    data: {
+                        action: 'delete',
+                        id: id
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'ลบสำเร็จ!',
+                                text: response.message,
+                                confirmButtonText: 'ตกลง'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'เกิดข้อผิดพลาด!',
+                                text: response.message,
+                                confirmButtonText: 'ตกลง'
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'เกิดข้อผิดพลาด!',
+                            text: error,
+                            confirmButtonText: 'ตกลง'
+                        });
                     }
-                },
-                error: function(xhr, status, error) {
-                    alert('เกิดข้อผิดพลาด: ' + error + '\nResponse: ' + xhr.responseText);
-                }
-            });
-        }
+                });
+            }
+        });
     }
 
     $('#productForm').on('submit', function(e) {
@@ -588,34 +625,48 @@ require_once '../templates/layouts/header.php';
             method: 'POST',
             data: formData,
             dataType: 'json',
-            processData: false, // Important for FormData
-            contentType: false, // Important for FormData
+            processData: false,
+            contentType: false,
             success: function(response) {
-                alert(response.message);
                 if (response.success) {
-                    location.reload();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'สำเร็จ!',
+                        text: response.message,
+                        confirmButtonText: 'ตกลง'
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด!',
+                        text: response.message,
+                        confirmButtonText: 'ตกลง'
+                    });
                 }
             },
             error: function(xhr, status, error) {
-                alert('เกิดข้อผิดพลาดในการบันทึก: ' + error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด!',
+                    text: 'เกิดข้อผิดพลาดในการบันทึก: ' + error,
+                    confirmButtonText: 'ตกลง'
+                });
             }
         });
     });
 
     function generateSKU() {
-        // Generate SKU: PROD- + Random 6 digits
         const randomNum = Math.floor(100000 + Math.random() * 900000);
         document.getElementById('sku').value = 'PROD-' + randomNum;
     }
 
     function generateBarcode() {
-        // Generate Barcode: Random 13 digits (EAN-13 style but just random for now)
         let result = '';
         for (let i = 0; i < 12; i++) {
             result += Math.floor(Math.random() * 10);
         }
-        // Calculate simple check digit (not real EAN-13 algorithm but enough for internal use)
-        // Or just use 13 random digits
         result += Math.floor(Math.random() * 10);
         document.getElementById('barcode').value = result;
     }

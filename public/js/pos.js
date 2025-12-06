@@ -1,4 +1,4 @@
-// POS System JavaScript
+// POS System JavaScript with SweetAlert2
 let cart = [];
 let selectedPaymentMethod = 'cash';
 let currentShiftId = null;
@@ -42,10 +42,8 @@ function initializeEventListeners() {
     // Payment modal buttons
     const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
     if (confirmPaymentBtn) {
-        console.log('Binding confirmPaymentBtn');
         confirmPaymentBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            console.log('Confirm Payment Button Clicked via Event Listener');
             confirmPayment();
         });
     }
@@ -61,10 +59,8 @@ function initializeEventListeners() {
     // Close shift modal buttons
     const confirmCloseShiftBtn = document.getElementById('confirmCloseShiftBtn');
     if (confirmCloseShiftBtn) {
-        console.log('Binding confirmCloseShiftBtn');
         confirmCloseShiftBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            console.log('Confirm Close Shift Button Clicked via Event Listener');
             confirmCloseShift();
         });
     }
@@ -83,7 +79,7 @@ window.openShift = function() {
     const startCash = parseFloat(document.getElementById('startCashInput').value) || 0;
     
     if (startCash < 0) {
-        alert('กรุณาระบุจำนวนเงินที่ถูกต้อง');
+        Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'กรุณาระบุจำนวนเงินที่ถูกต้อง', confirmButtonText: 'ตกลง' });
         return;
     }
 
@@ -101,12 +97,12 @@ window.openShift = function() {
             currentShiftId = data.shift_id;
             location.reload();
         } else {
-            alert(data.message);
+            Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด!', text: data.message, confirmButtonText: 'ตกลง' });
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('เกิดข้อผิดพลาดในการเปิดกะ');
+        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด!', text: 'เกิดข้อผิดพลาดในการเปิดกะ', confirmButtonText: 'ตกลง' });
     });
 };
 
@@ -180,7 +176,7 @@ window.addToCart = function(product) {
     
     if (existingItem) {
         if (existingItem.quantity >= product.stock_quantity) {
-            alert('สินค้าคงเหลือไม่เพียงพอ');
+            Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'สินค้าคงเหลือไม่เพียงพอ', confirmButtonText: 'ตกลง' });
             return;
         }
         existingItem.quantity++;
@@ -264,7 +260,7 @@ window.updateQuantity = function(index, change) {
     }
     
     if (newQty > item.stock_quantity) {
-        alert('สินค้าคงเหลือไม่เพียงพอ');
+        Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'สินค้าคงเหลือไม่เพียงพอ', confirmButtonText: 'ตกลง' });
         return;
     }
     
@@ -280,16 +276,25 @@ window.removeFromCart = function(index) {
 
 // Clear Cart
 window.clearCart = function() {
-    console.log('clearCart called. Cart length:', cart.length);
     if (cart.length === 0) {
-        alert('ตะกร้าสินค้าว่างเปล่า');
+        Swal.fire({ icon: 'info', title: 'แจ้งเตือน', text: 'ตะกร้าสินค้าว่างเปล่า', confirmButtonText: 'ตกลง' });
         return;
     }
-    if (confirm('ยกเลิกรายการทั้งหมด?')) {
-        cart = [];
-        updateCart();
-        console.log('Cart cleared');
-    }
+    Swal.fire({
+        title: 'ยกเลิกรายการ?',
+        text: 'ยกเลิกรายการทั้งหมด?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'ใช่, ยกเลิก',
+        cancelButtonText: 'ไม่'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            cart = [];
+            updateCart();
+        }
+    });
 };
 
 // Show Payment Modal
@@ -312,7 +317,6 @@ window.closePaymentModal = function() {
 // Select Payment Method
 window.selectPaymentMethod = function(method) {
     selectedPaymentMethod = method;
-    console.log('Selected payment method:', method);
     
     // Update button styles
     document.querySelectorAll('.payment-method-btn').forEach(btn => {
@@ -340,7 +344,7 @@ window.selectPaymentMethod = function(method) {
     }
 };
 
-// Calculate Change (UI Only)
+// Calculate Change
 function calculateChange() {
     const total = parseFloat(document.getElementById('paymentTotal').textContent);
     const received = parseFloat(document.getElementById('receivedAmount').value) || 0;
@@ -361,39 +365,32 @@ function calculateChange() {
     }
 }
 
-// Confirm Payment (API Call)
+// Confirm Payment
 window.confirmPayment = function() {
     const total = parseFloat(document.getElementById('paymentTotal').textContent);
     const received = parseFloat(document.getElementById('receivedAmount').value) || 0;
     
     if (selectedPaymentMethod === 'cash') {
         if (received < total) {
-            alert('จำนวนเงินไม่พอ!');
+            Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'จำนวนเงินไม่พอ!', confirmButtonText: 'ตกลง' });
             return;
         }
     }
     
-    // Prepare items
     const items = cart.map(item => ({
         product_id: item.product_id,
         quantity: item.quantity,
         price: item.price
     }));
     
-    // Disable button to prevent double submit
     const btn = document.getElementById('confirmPaymentBtn');
     const originalText = btn.innerText;
     btn.disabled = true;
     btn.innerText = 'กำลังบันทึก...';
     
-    console.log('Sending to API:', { items, payment_method: selectedPaymentMethod });
-    
-    // Send to server
     fetch('api/pos_checkout.php', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             items: items,
             payment_method: selectedPaymentMethod,
@@ -401,29 +398,20 @@ window.confirmPayment = function() {
             amount_total: total
         })
     })
-    .then(response => {
-        console.log('API Response status:', response.status);
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
-        console.log('API Response data:', data);
         if (data.success) {
-            // alert('บันทึกการขายสำเร็จ!\n\nเลขที่ใบเสร็จ: ' + data.receipt_number);
-            
-            // Open receipt in new window
             window.open(`receipt.php?id=${data.sale_id}`, '_blank', 'width=800,height=600');
-            
-            // Clear cart and close modal
             cart = [];
             updateCart();
             closePaymentModal();
         } else {
-            alert('เกิดข้อผิดพลาด: ' + data.message);
+            Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด!', text: data.message, confirmButtonText: 'ตกลง' });
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + error.message);
+        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด!', text: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + error.message, confirmButtonText: 'ตกลง' });
     })
     .finally(() => {
         btn.disabled = false;
@@ -433,18 +421,14 @@ window.confirmPayment = function() {
 
 // Show Close Shift Modal
 window.showCloseShiftModal = function() {
-    console.log('=== SHOW CLOSE SHIFT MODAL ===');
     if (cart.length > 0) {
-        alert('กรุณาชำระรายการที่ค้างอยู่ก่อนปิดกะ');
+        Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'กรุณาชำระรายการที่ค้างอยู่ก่อนปิดกะ', confirmButtonText: 'ตกลง' });
         return;
     }
-
-    console.log('Fetching summary for shift:', currentShiftId);
     
     fetch(`api/shift_action.php?action=summary&shift_id=${currentShiftId}`)
         .then(response => response.json())
         .then(data => {
-            console.log('Shift summary data:', data);
             if (data.success) {
                 const summary = data.summary;
                 const startCash = parseFloat(summary.start_cash || 0);
@@ -455,25 +439,20 @@ window.showCloseShiftModal = function() {
                 document.getElementById('summaryCashSales').textContent = cashTotal.toFixed(2) + ' ฿';
                 document.getElementById('summaryQRSales').textContent = parseFloat(summary.qr_total || 0).toFixed(2) + ' ฿';
                 document.getElementById('summaryExpectedCash').textContent = expectedCash.toFixed(2) + ' ฿';
-                
                 document.getElementById('endCashInput').value = expectedCash.toFixed(2);
 
-                // Show modal AFTER data is populated
                 const modal = document.getElementById('closeShiftModal');
                 if (modal) {
                     modal.classList.remove('hidden');
                     modal.classList.add('flex');
-                    console.log('Modal classes updated:', modal.className);
-                } else {
-                    console.error('Modal element not found!');
                 }
             } else {
-                alert('ไม่สามารถดึงข้อมูลกะได้: ' + data.message);
+                Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด!', text: 'ไม่สามารถดึงข้อมูลกะได้: ' + data.message, confirmButtonText: 'ตกลง' });
             }
         })
         .catch(error => {
-            console.error('Error fetching summary:', error);
-            alert('เกิดข้อผิดพลาด: ' + error.message);
+            console.error('Error:', error);
+            Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด!', text: error.message, confirmButtonText: 'ตกลง' });
         });
 };
 
@@ -482,13 +461,9 @@ window.closeCloseShiftModal = function() {
     document.getElementById('closeShiftModal').classList.remove('flex');
 };
 
-// Confirm Close Shift - MAIN FUNCTION
+// Confirm Close Shift
 window.confirmCloseShift = function() {
-    console.log('=== CONFIRM CLOSE SHIFT FUNCTION CALLED ===');
-    console.log('Shift ID:', currentShiftId);
-    
     const endCash = parseFloat(document.getElementById('endCashInput').value) || 0;
-    console.log('End cash:', endCash);
     
     const formData = new FormData();
     formData.append('action', 'close');
@@ -499,16 +474,11 @@ window.confirmCloseShift = function() {
         method: 'POST',
         body: formData
     })
-    .then(response => {
-        console.log('Close shift response status:', response.status);
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
-        console.log('Close shift response data:', data);
         if (data.success) {
             const diff = parseFloat(data.diff_amount) || 0;
-            let msg = 'ปิดกะสำเร็จ!\n\n';
-            msg += `เงินสดที่ควรมี: ${parseFloat(data.expected_cash).toFixed(2)} ฿\n`;
+            let msg = `เงินสดที่ควรมี: ${parseFloat(data.expected_cash).toFixed(2)} ฿\n`;
             msg += `เงินสดที่นับได้: ${parseFloat(data.end_cash).toFixed(2)} ฿\n`;
             
             if (diff > 0) {
@@ -519,15 +489,19 @@ window.confirmCloseShift = function() {
                 msg += 'ยอดเงินตรงกัน ✓';
             }
             
-            alert(msg);
-            location.reload();
+            Swal.fire({
+                icon: 'success',
+                title: 'ปิดกะสำเร็จ!',
+                text: msg,
+                confirmButtonText: 'ตกลง'
+            }).then(() => location.reload());
         } else {
-            alert('เกิดข้อผิดพลาด: ' + data.message);
+            Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด!', text: data.message, confirmButtonText: 'ตกลง' });
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('เกิดข้อผิดพลาดในการปิดกะ: ' + error.message);
+        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด!', text: 'เกิดข้อผิดพลาดในการปิดกะ: ' + error.message, confirmButtonText: 'ตกลง' });
     });
 };
 

@@ -127,7 +127,6 @@ require_once '../templates/layouts/header.php';
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         <?php
-                        // Simple query for recent 'in' transactions
                         $query = "SELECT t.*, p.name as product_name, u.username 
                                   FROM transactions t 
                                   JOIN products p ON t.product_id = p.id 
@@ -154,7 +153,6 @@ require_once '../templates/layouts/header.php';
 
 <script>
     $(document).ready(function() {
-        // Initialize DataTable
         $('#stockInTable').DataTable({
             "order": [
                 [0, "desc"]
@@ -167,24 +165,48 @@ require_once '../templates/layouts/header.php';
         $('#stockInForm').on('submit', function(e) {
             e.preventDefault();
 
-            if (!confirm('ยืนยันการรับสินค้า?')) return;
-
-            $.ajax({
-                url: 'stock_in.php',
-                method: 'POST',
-                data: $(this).serialize(),
-                dataType: 'json',
-                success: function(response) {
-                    if (response.success) {
-                        alert(response.message);
-                        location.reload();
-                    } else {
-                        alert('Error: ' + response.message);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error(xhr.responseText);
-                    alert('เกิดข้อผิดพลาด: ' + error);
+            Swal.fire({
+                title: 'ยืนยันการรับสินค้า?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'ยืนยัน',
+                cancelButtonText: 'ยกเลิก'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: 'stock_in.php',
+                        method: 'POST',
+                        data: $(this).serialize(),
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'สำเร็จ!',
+                                    text: response.message,
+                                    confirmButtonText: 'ตกลง'
+                                }).then(() => location.reload());
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'เกิดข้อผิดพลาด!',
+                                    text: response.message,
+                                    confirmButtonText: 'ตกลง'
+                                });
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error(xhr.responseText);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'เกิดข้อผิดพลาด!',
+                                text: error,
+                                confirmButtonText: 'ตกลง'
+                            });
+                        }
+                    });
                 }
             });
         });
