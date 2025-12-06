@@ -238,6 +238,16 @@
                 </li>
                 <?php if ($_SESSION['role'] === 'admin'): ?>
                     <li>
+                        <a href="categories.php" class="flex items-center p-3 rounded-xl transition-all duration-200 group <?= $current_page == 'categories.php' ? 'text-blue-700 bg-blue-50/80 shadow-sm ring-1 ring-blue-100' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' ?>">
+                            <svg class="w-5 h-5 <?= $current_page == 'categories.php' ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600' ?> transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                            </svg>
+                            <span class="ml-3">จัดการหมวดหมู่สินค้า</span>
+                        </a>
+                    </li>
+                <?php endif; ?>
+                <?php if ($_SESSION['role'] === 'admin'): ?>
+                    <li>
                         <a href="products.php" class="flex items-center p-3 rounded-xl transition-all duration-200 group <?= $current_page == 'products.php' ? 'text-blue-700 bg-blue-50/80 shadow-sm ring-1 ring-blue-100' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' ?>">
                             <svg class="w-5 h-5 <?= $current_page == 'products.php' ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600' ?> transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
